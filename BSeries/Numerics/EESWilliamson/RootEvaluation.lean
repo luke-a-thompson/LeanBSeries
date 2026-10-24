@@ -39,7 +39,7 @@ def spectralNode (q A B : ℂ) (k : ℕ) : ℂ := (1 - A * q ^ k - B * (q⁻¹) 
 def spectralSum (q A B : ℂ) (k : ℕ) : ℂ :=
   ∑ j ∈ Finset.range k, (A * q ^ j + B * (q⁻¹) ^ j)
 
-/-- The roots supplied by the polynomial rotation factorization, in orbit order. -/
+/-- The roots located by polynomial rotation, in orbit order. -/
 def spectralRoot (q : ℂ) (j : ℕ) : ℂ := 2 / ((q - 1) * q ^ j)
 
 private def rootLower (q A : ℂ) (j : ℕ) : ℂ := -(A / 2) * (1 - q ^ j)

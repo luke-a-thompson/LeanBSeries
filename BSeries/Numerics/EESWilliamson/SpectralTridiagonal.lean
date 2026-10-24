@@ -25,7 +25,7 @@ theorem forwardBackward_reverseShift_tridiagonal {s : ℕ} (hs : 2 ≤ s)
   have hexpc := isExplicit_forwardBackward rk hexp
   have hsub := forwardBackward_subdiagonal_ne_zero (by omega : 0 < s) hexp hcons hanti
   have hdet := det_krylovMatrix_ne_zero hexpc hsub
-  obtain ⟨q, hroot, hphase, horder, hfactor⟩ := exists_forwardBackward_spectral_data hs hexp hcons hanti
+  obtain ⟨q, hroot, hphase, horder, hroots⟩ := exists_forwardBackward_spectral_data hs hexp hcons hanti
   have hq : q ≠ 0 := by intro h; simp [h] at hroot
   have hq₁ : q ≠ 1 := by intro h; rw [h, one_pow] at hphase; norm_num at hphase
   have hdist : q ≠ q⁻¹ := by
@@ -76,14 +76,8 @@ theorem forwardBackward_reverseShift_tridiagonal {s : ℕ} (hs : 2 ≤ s)
     exact pow_injOn_Iio_orderOf (by simp only [Set.mem_Iio]; have := l.isLt; omega)
       (by simp only [Set.mem_Iio]; have := m.isLt; omega) heq
   have hxroot (l : Fin s) : (stabilityPolynomial rk).eval₂ Complex.ofRealHom (x l) = 0 := by
-    rw [eval₂_eq_eval_map, hfactor, eval_prod]
-    apply Finset.prod_eq_zero (Finset.mem_range.mpr l.isLt)
-    simp only [eval_sub, eval_one, eval_mul, eval_C, eval_X]
-    dsimp [x, spectralRoot]
-    have hqm := sub_ne_zero.mpr hq₁
-    have hl := pow_ne_zero l.val hq
-    field_simp
-    ring
+    rw [eval₂_eq_eval_map]
+    exact hroots l.val l.isLt
   let V : Matrix (Fin s) (Fin s) ℂ := rk.krylovMatrix.map Complex.ofReal
   let L := upperBand s (spectralNode q A B) (fun k => spectralSum q A B (k + 1))
   have hLV : L * Vᵀ = Vᵀ * diagonal (fun k => (rk.abscissa k : ℂ)) := by
