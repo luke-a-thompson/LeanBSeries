@@ -61,43 +61,24 @@ theorem forwardBackward_node_recurrence_raw {rk : RungeKutta (Fin s) R}
   linear_combination 2 * hm - 2 * stabilityCoeff rk 3 * h₀ -
     2 * stabilityCoeff rk 3 * h₁ - 2 * stabilityCoeff rk 3 * h₂
 
-/-- If `r₃ = 1/4`, the second and third nodes coincide, and the bidiagonal relation kills a nonzero Krylov pivot. -/
+/-- If `r₃ = 1/4`, the node recurrence forces the first backward abscissa to be `1/2`, contradicting its value `1`. -/
 theorem stabilityCoeff_three_ne_quarter {rk : RungeKutta (Fin s) R}
     (hs : 2 ≤ s) (hexp : IsExplicit rk) (hcons : weightBullet rk = 1)
     (hanti : ForestAlgebra.Character.HasAntisymOrder
       (Series.toCharacter (series rk)) (2 * s - 1)) :
     stabilityCoeff rk 3 ≠ 1 / 4 := by
   intro hr
-  have hexpc := isExplicit_forwardBackward rk hexp
-  have hsub := forwardBackward_subdiagonal_ne_zero (by omega : 0 < s) hexp hcons hanti
-  have hdet := det_krylovMatrix_ne_zero hexpc hsub
-  obtain ⟨t, ht, ht₀⟩ := exists_forwardBackward_bidiagonal hs hexp hcons hanti
-  let i₁ : Fin (s + s) := ⟨1, by omega⟩
-  let i₂ : Fin (s + s) := ⟨2, by omega⟩
-  have hc₁ : rk.forwardBackward.abscissa i₁ = 1 / 2 := by
-    have h := forwardBackward_node_recurrence_raw hs hexp hcons hdet hanti ht 0 (by omega)
-    rw [hr] at h
-    dsimp [i₁]
-    linear_combination -h
-  have hc₂ : rk.forwardBackward.abscissa i₂ = 1 / 2 := by
-    have h := forwardBackward_node_recurrence_raw hs hexp hcons hdet hanti ht 1 (by omega)
-    rw [hr] at h
-    dsimp [i₂]
-    linear_combination -h
-  have ht₁ : t ⟨1, by omega⟩ = 1 := by
-    have h := forwardBackward_subdiagonal_difference hexp hcons hdet hanti ht i₁
-    rw [hc₁] at h
-    dsimp [i₁] at h
-    rw [krylovSubdiagonal_succ t 1 (by omega),
-      krylovSubdiagonal_succ t 0 (by omega), ht₀] at h
-    linear_combination h
-  have h := ht ⟨1, by omega⟩ i₂
-  change rk.forwardBackward.abscissa i₂ * _ = rk.forwardBackward.abscissa i₁ * _ + _ at h
-  rw [hc₁, hc₂, ht₁, one_mul] at h
-  have hpivot := krylovMatrix_diag_ne_zero hexpc hsub i₂
-  apply hpivot
-  change stageWeight rk.forwardBackward (PTree.tallTree 2) i₂ = 0
-  linear_combination -h
+  have hdet := det_krylovMatrix_ne_zero (isExplicit_forwardBackward rk hexp)
+    (forwardBackward_subdiagonal_ne_zero (by omega) hexp hcons hanti)
+  obtain ⟨t, ht, _⟩ := exists_forwardBackward_bidiagonal hs hexp hcons hanti
+  have h := forwardBackward_node_recurrence_raw hs hexp hcons hdet hanti ht
+    (s - 1) (by omega)
+  have hc₀ : rk.abscissa ⟨0, by omega⟩ = 0 := by
+    exact Finset.sum_eq_zero fun j _ => hexp _ j (by change 0 ≤ j.val; omega)
+  have heq : (⟨s - 1 + 1, by omega⟩ : Fin (s + s)) =
+      (⟨0, by omega⟩ : Fin s).natAdd s := Fin.ext (by simp; omega)
+  rw [hr, heq, abscissa_forwardBackward_right _ hcons, hc₀] at h
+  norm_num at h
 
 /-- The normalized recurrence is well defined; it will have coefficient `2 cos ω` after the spectral argument. -/
 theorem forwardBackward_node_recurrence {rk : RungeKutta (Fin s) R}
