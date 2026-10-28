@@ -290,6 +290,45 @@ theorem krylovSubdiagonal_succ (t : Fin (s - 1) → R) (k : ℕ) (hk : k + 1 < s
   rw [dite_eq_left (show 0 < k + 1 ∧ k + 1 < s from ⟨by omega, hk⟩)]
   rfl
 
+/-- The bidiagonal relation expresses chain vectors in the Newton polynomial basis of the nodes. -/
+theorem IsKrylovBidiagonal.node_product {rk : RungeKutta (Fin s) R}
+    {t : Fin (s - 1) → R} (ht : IsKrylovBidiagonal rk t)
+    (k : ℕ) (hk : k < s) (i : Fin s) :
+    (∏ j : Fin k, (rk.abscissa i - rk.abscissa ⟨j.val, by have := j.isLt; omega⟩)) =
+      (∏ j : Fin k, krylovSubdiagonal t (j.val + 1)) *
+        stageWeight rk (PTree.tallTree k) i := by
+  induction k with
+  | zero => simp [PTree.tallTree, stageWeightList]
+  | succ k ih =>
+      rw [Fin.prod_univ_castSucc, Fin.prod_univ_castSucc]
+      simp only [Fin.val_castSucc, Fin.val_last]
+      rw [ih (by omega), krylovSubdiagonal_succ t k hk]
+      linear_combination (∏ j : Fin k, krylovSubdiagonal t (j.val + 1)) *
+        ht ⟨k, by omega⟩ i
+
+/-- A zero lowering coefficient confines all nodes to the preceding ones. -/
+theorem IsKrylovBidiagonal.card_nodes_le_of_eq_zero [DecidableEq R]
+    {rk : RungeKutta (Fin s) R} {t : Fin (s - 1) → R} (ht : IsKrylovBidiagonal rk t)
+    (k : Fin (s - 1)) (hk : t k = 0) :
+    (Finset.univ.image rk.abscissa).card ≤ k.val + 1 := by
+  classical
+  have hsub : Finset.univ.image rk.abscissa ⊆
+      Finset.univ.image (fun j : Fin (k.val + 1) =>
+        rk.abscissa ⟨j.val, by have := j.isLt; have := k.isLt; omega⟩) := by
+    intro x hx
+    obtain ⟨i, _, rfl⟩ := Finset.mem_image.mp hx
+    have h := ht.node_product (k.val + 1) (by have := k.isLt; omega) i
+    have hz : (∏ j : Fin (k.val + 1), krylovSubdiagonal t (j.val + 1)) = 0 := by
+      apply Finset.prod_eq_zero_iff.mpr
+      refine ⟨Fin.last k.val, Finset.mem_univ _, ?_⟩
+      simpa only [Fin.val_last, krylovSubdiagonal_succ t k.val (by have := k.isLt; omega)] using hk
+    rw [hz, zero_mul] at h
+    obtain ⟨j, _, hj⟩ := Finset.prod_eq_zero_iff.mp h
+    exact Finset.mem_image.mpr ⟨j, Finset.mem_univ _, (sub_eq_zero.mp hj).symm⟩
+  exact (Finset.card_le_card hsub).trans (by
+    simpa using (Finset.card_image_le (f := fun j : Fin (k.val + 1) =>
+      rk.abscissa ⟨j.val, by have := j.isLt; have := k.isLt; omega⟩) (s := Finset.univ)))
+
 /-- Entries of the lower bidiagonal multiplication operator, including its truncated final column. -/
 theorem IsKrylovBidiagonal.inKrylovBasis_diagonal {rk : RungeKutta (Fin s) R}
     (hexp : IsExplicit rk) (hdet : rk.krylovMatrix.det ≠ 0)

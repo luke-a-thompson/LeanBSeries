@@ -3,7 +3,7 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Daniil Shmelev
 -/
-import BSeries.Numerics.EESWilliamson.SpectralTridiagonal
+import BSeries.Numerics.EESWilliamson.AlgebraicTridiagonal
 import BSeries.Numerics.EESCosineOrder
 
 /-!
@@ -13,7 +13,7 @@ We use `ForestAlgebra.Character.HasAntisymOrder` for antisymmetric order and `Lo
 
 Indices in `Fin s` are zero-based: `LowStorage.A i` and `LowStorage.B i` represent the coefficients `α_{i+1}` and `β_{i+1}` in the one-based recurrence `K_i = α_i K_{i-1} + h f(t_n + c_i h, Y_{i-1})`, `Y_i = Y_{i-1} + β_i K_i`, starting from `K_0 = 0` and `Y_0 = y_n`. Equality of the induced tableau with the original tableau expresses equality of all stages and of the final update `Y_s = y_{n+1}`.
 
-The proof follows the spectral argument: rooted-tree cancellation gives a bidiagonal polynomial operator, polynomial rotation determines the primitive root orbit, and evaluation at the stability roots gives an irreducible tridiagonal operator. A diagonal bilinear form makes the stage polynomials orthogonal; symmetry and degree force their three-term recurrence. The existing reverse-shift matrix records that recurrence and supplies the tableau row identities used by the shared Williamson reconstruction. Reciprocal characteristic roots and geometric sums express the cosine formulas algebraically. Supporting lemmas live in `EESWilliamson/`, with general polynomial and matrix facts in `Algebra/` and reconstruction in `Williamson/`.
+Rooted-tree cancellation gives a bidiagonal polynomial operator. The full period and the quadratic node invariant separate the stage nodes. The node and subdiagonal recurrences give a quadratic operator identity; its dual relation forces the three-term recurrence directly in the stage-polynomial eigenbasis. The reverse-shift matrix records that recurrence and supplies the tableau row identities used by the shared Williamson reconstruction. Supporting lemmas live in `EESWilliamson/`, with general polynomial and matrix facts in `Algebra/` and reconstruction in `Williamson/`.
 -/
 
 namespace BSeries.RungeKutta

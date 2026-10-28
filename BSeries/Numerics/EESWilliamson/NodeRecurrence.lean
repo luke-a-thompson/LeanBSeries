@@ -80,7 +80,7 @@ theorem stabilityCoeff_three_ne_quarter {rk : RungeKutta (Fin s) R}
   rw [hr, heq, abscissa_forwardBackward_right _ hcons, hc₀] at h
   norm_num at h
 
-/-- The normalized recurrence is well defined; it will have coefficient `2 cos ω` after the spectral argument. -/
+/-- Normalizing gives the homogeneous recurrence for the centered nodes. -/
 theorem forwardBackward_node_recurrence {rk : RungeKutta (Fin s) R}
     (hs : 2 ≤ s) (hexp : IsExplicit rk) (hcons : weightBullet rk = 1)
     (hanti : ForestAlgebra.Character.HasAntisymOrder
@@ -101,6 +101,37 @@ theorem forwardBackward_node_recurrence {rk : RungeKutta (Fin s) R}
     linear_combination -h / 4
   field_simp
   linear_combination hraw
+
+/-- The master identity after centering the nodes and telescoping the bidiagonal differences. -/
+theorem forwardBackward_master_centered {s : ℕ}
+    {rk : RungeKutta (Fin s) R} (hexp : IsExplicit rk) (hcons : weightBullet rk = 1)
+    (hdet : rk.forwardBackward.krylovMatrix.det ≠ 0)
+    (hanti : ForestAlgebra.Character.HasAntisymOrder
+      (Series.toCharacter (series rk)) (2 * s - 1))
+    {t : Fin (s + s - 1) → R} (ht : IsKrylovBidiagonal rk.forwardBackward t)
+    (i k : ℕ) (hik : i + k < s + s) :
+    stabilityCoeff rk k * ((1 - 2 * rk.forwardBackward.abscissa ⟨i, by omega⟩) +
+        (1 - 2 * rk.forwardBackward.abscissa ⟨i + k, hik⟩)) =
+      2 * stabilityCoeff rk (k + 1) *
+        ∑ j : Fin (k + 1), (1 - 2 * rk.forwardBackward.abscissa
+          ⟨i + j.val, by have := j.isLt; omega⟩) := by
+  have hq (k : ℕ) (hik : i + k < s + s) :
+      krylovSubdiagonal t (i + k + 1) - krylovSubdiagonal t i =
+        ∑ j : Fin (k + 1), (1 - 2 * rk.forwardBackward.abscissa
+          ⟨i + j.val, by have := j.isLt; omega⟩) := by
+    have h := Finset.sum_range_sub (fun j => krylovSubdiagonal t (i + j)) (k + 1)
+    rw [Finset.sum_range] at h
+    simp only [← Nat.add_assoc, Nat.add_zero] at h
+    rw [← h]
+    apply Finset.sum_congr rfl
+    intro j _
+    exact forwardBackward_subdiagonal_difference hexp hcons hdet hanti ht
+      ⟨i + j.val, by have := j.isLt; omega⟩
+  have h := forwardBackward_master_identity hexp hcons hdet hanti ht
+    ⟨i, by omega⟩ ⟨i + k, hik⟩ (by change i ≤ i + k; omega)
+  simp only [Nat.add_sub_cancel_left] at h
+  rw [hq k hik] at h
+  linear_combination -2 * h
 
 end
 

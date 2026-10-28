@@ -77,20 +77,4 @@ theorem mul_lowerBand (M : Matrix (Fin N) (Fin N) R) (c q : ℕ → R) (i j : Fi
   rw [← transpose_lowerBand, ← transpose_mul] at h
   simpa only [transpose_apply, mul_comm] using h
 
-theorem mul_upperBand (M : Matrix (Fin N) (Fin N) R) (d e : ℕ → R) (i j : Fin N) :
-    (M * upperBand N d e) i j = M i j * d j.val +
-      if hj : 0 < j.val then M i ⟨j.val - 1, by have := j.isLt; omega⟩ * e (j.val - 1) else 0 := by
-  have hT : (upperBand N d e)ᵀ = lowerBand N d (fun k => e (k - 1)) := by
-    ext i j
-    simp only [transpose_apply, upperBand, lowerBand]
-    by_cases heq : i = j
-    · subst j; simp
-    · simp only [heq, Ne.symm heq, ite_false, zero_add]
-      by_cases hij : i.val = j.val + 1
-      · simp [hij]
-      · simp [hij]
-  have h := lowerBand_mul d (fun k => e (k - 1)) Mᵀ j i
-  rw [← hT, ← transpose_mul] at h
-  simpa only [transpose_apply, mul_comm] using h
-
 end Matrix
