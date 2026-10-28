@@ -26,13 +26,11 @@ theorem forwardBackward_node_regularity {s : ℕ} (hs : 2 ≤ s)
   let v : Fin (s + s) → R := fun i => 1 - 2 * rk.forwardBackward.abscissa i
   let y := v ⟨1, by omega⟩
   let u := SecondOrder.sequence a 1 y
-  have hc₀ : rk.abscissa ⟨0, by omega⟩ = 0 :=
-    Finset.sum_eq_zero fun j _ => hexp _ j (by change 0 ≤ j.val; omega)
   have hv₀ : v ⟨0, by omega⟩ = 1 := by
     have h : rk.forwardBackward.abscissa ⟨0, by omega⟩ = rk.abscissa ⟨0, by omega⟩ :=
       abscissa_forwardBackward_left rk ⟨0, by omega⟩
     dsimp [v]
-    rw [h, hc₀]
+    rw [h, hexp.abscissa_zero]
     ring
   have hrec (k : ℕ) (hk : k + 2 < s + s) :
       v ⟨k + 2, hk⟩ - a * v ⟨k + 1, by omega⟩ + v ⟨k, by omega⟩ = 0 := by
@@ -62,15 +60,12 @@ theorem forwardBackward_node_regularity {s : ℕ} (hs : 2 ≤ s)
   have hmin (k : ℕ) (hk : 0 < k) (hkm : k < 2 * m) :
       ¬(u k = u 0 ∧ u (k + 1) = u 1) := by
     intro h
-    have hp : IsPeriodicPt (SecondOrder.step a) k (1, y) := by
-      change (SecondOrder.step a)^[k] (1, y) = (1, y)
-      rw [← Module.End.pow_apply, SecondOrder.pair]
-      change (u k, u (k + 1)) = (1, y)
-      rw [h.1, h.2]
-      simp [u]
-    have hle := hp.minimalPeriod_le hk
-    rw [hperiod] at hle
-    omega
+    apply not_isPeriodicPt_of_pos_of_lt_minimalPeriod hk.ne' (by rwa [hperiod])
+    change (SecondOrder.step a)^[k] (1, y) = (1, y)
+    rw [← Module.End.pow_apply, SecondOrder.pair]
+    change (u k, u (k + 1)) = (1, y)
+    rw [h.1, h.2]
+    simp [u]
   have hdet := det_krylovMatrix_ne_zero (isExplicit_forwardBackward rk hexp)
     (forwardBackward_subdiagonal_ne_zero (by omega) hexp hcons hanti)
   obtain ⟨t, ht, _⟩ := exists_forwardBackward_bidiagonal hs hexp hcons hanti
@@ -103,22 +98,15 @@ theorem forwardBackward_node_regularity {s : ℕ} (hs : 2 ≤ s)
   subst m
   refine ⟨SecondOrder.coefficients_ne_zero u (stabilityCoeff rk) rfl rfl hmin hmaster, ?_⟩
   intro i j hij
-  have h₀ := congrArg Prod.fst hij
-  have h₁ := congrArg Prod.snd hij
-  dsimp only at h₀ h₁
-  have hp : (SecondOrder.step a)^[i.val] (1, y) = (SecondOrder.step a)^[j.val] (1, y) := by
-    rw [← Module.End.pow_apply, ← Module.End.pow_apply, SecondOrder.pair, SecondOrder.pair]
-    apply Prod.ext
-    · change u i.val = u j.val
-      rw [hfinite ⟨i.val, by have := i.isLt; omega⟩,
-        hfinite ⟨j.val, by have := j.isLt; omega⟩, h₀]
-    · change u (i.val + 1) = u (j.val + 1)
-      rw [hfinite ⟨i.val + 1, by have := i.isLt; omega⟩,
-        hfinite ⟨j.val + 1, by have := j.isLt; omega⟩, h₁]
   apply Fin.ext
-  exact iterate_injOn_Iio_minimalPeriod
+  apply iterate_injOn_Iio_minimalPeriod (f := SecondOrder.step a) (x := (1, y))
     (by simp only [Set.mem_Iio, hperiod]; have := i.isLt; omega)
-    (by simp only [Set.mem_Iio, hperiod]; have := j.isLt; omega) hp
+    (by simp only [Set.mem_Iio, hperiod]; have := j.isLt; omega)
+  dsimp only
+  rw [← Module.End.pow_apply, ← Module.End.pow_apply, SecondOrder.pair, SecondOrder.pair]
+  change (u i.val, u (i.val + 1)) = (u j.val, u (j.val + 1))
+  simpa only [Prod.map_apply, ← hfinite] using
+    congrArg (Prod.map (fun x : R => 1 - 2 * x) (fun x : R => 1 - 2 * x)) hij
 
 end
 end BSeries.RungeKutta

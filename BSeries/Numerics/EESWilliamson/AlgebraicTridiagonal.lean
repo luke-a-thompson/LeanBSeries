@@ -38,7 +38,7 @@ theorem forwardBackward_reverseShift_quadratic {s : ℕ} (hs : 2 ≤ s)
     simp only [c, dite_eq_left k.isLt]
   have hc₀ : c 0 = 0 := by
     rw [hc ⟨0, by omega⟩]
-    exact Finset.sum_eq_zero fun j _ => hexpc _ j (by change 0 ≤ j.val; omega)
+    exact hexpc.abscissa_zero _
   have ht₀ : krylovSubdiagonal t 0 = 0 := by simp
   have ht₁' : krylovSubdiagonal t 1 = 1 := by
     simpa only [krylovSubdiagonal_succ t 0 (by omega)] using ht₁
@@ -67,7 +67,7 @@ theorem forwardBackward_reverseShift_quadratic {s : ℕ} (hs : 2 ≤ s)
   have h := quadraticDual_eigen_coefficient _ a b d _ (c 1)
     (stagePolynomial rk.forwardBackward) rk.forwardBackward.abscissa
     (rk.forwardBackward.reverseShift (i.castAdd s))
-    (linearIndependent_stagePolynomial hexpc hdet) (ht.stagePolynomial hexpc c hc)
+    (linearIndependent_stagePolynomial hdet) (ht.stagePolynomial hexpc c hc)
     (i.castAdd s) j hX hdual (by intro h; have := congrArg Fin.val h; simp at this; omega)
   have hsum := hrec (i.val - 1) (by have := i.isLt; omega)
   have hprod := secondOrder_adjacent_product c a b d hc₀ hrec (i.val - 1)
@@ -80,11 +80,7 @@ theorem forwardBackward_reverseShift_quadratic {s : ℕ} (hs : 2 ≤ s)
     apply stabilityCoeff_three_ne_quarter hs hexp hcons hanti
     dsimp [a] at h
     linear_combination -h / 4
-  apply (mul_eq_zero.mp (show a *
-      ((rk.forwardBackward.abscissa j - rk.abscissa ⟨i.val - 1, by omega⟩) *
-        (rk.forwardBackward.abscissa j -
-          rk.forwardBackward.abscissa ⟨i.val + 1, by have := i.isLt; omega⟩) *
-        rk.forwardBackward.reverseShift (i.castAdd s) j) = 0 from ?_)).resolve_left ha
+  apply (mul_eq_zero_iff_left ha).mp
   have hci : c i.val = rk.forwardBackward.abscissa (i.castAdd s) := hc (i.castAdd s)
   rw [hci, hc ⟨i.val - 1, by omega⟩,
     hc ⟨i.val + 1, by have := i.isLt; omega⟩] at hsum hprod
@@ -127,9 +123,7 @@ theorem forwardBackward_reverseShift_tridiagonal {s : ℕ} (hs : 2 ≤ s)
       omega
     · have heq : (⟨i.val + 1, by have := i.isLt; omega⟩ : Fin (s + s)) =
           (⟨0, by omega⟩ : Fin s).natAdd s := Fin.ext (by simp; have := i.isLt; omega)
-      have hc₀ : rk.abscissa ⟨0, by omega⟩ = 0 :=
-        Finset.sum_eq_zero fun j _ => hexp _ j (by change 0 ≤ j.val; omega)
-      rw [heq, abscissa_forwardBackward_right _ hcons, hc₀, sub_zero]
+      rw [heq, abscissa_forwardBackward_right _ hcons, hexp.abscissa_zero, sub_zero]
       exact abscissa_ne_one_of_lt_last hs hexp hcons hanti j' (by dsimp [j']; have := i.isLt; omega)
 
 end

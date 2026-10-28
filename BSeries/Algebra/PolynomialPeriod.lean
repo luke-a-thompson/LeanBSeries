@@ -41,12 +41,12 @@ theorem master_of_two_shifts (a : R) (u : ℕ → R)
 
 /-- Every full block is a scalar multiple of the initial block. -/
 theorem coefficient_blocks (u r : ℕ → R) {m : ℕ} (hr₀ : r 0 = 1)
-    (hanti : ∀ i, u (i + m) = -u i)
+    (hanti : Function.Antiperiodic u m)
     (hmin : ∀ k, 0 < k → k < 2 * m → ¬(u k = u 0 ∧ u (k + 1) = u 1))
     (hmaster : ∀ i k, r k * (u i + u (i + k)) =
       2 * r (k + 1) * ∑ j ∈ Finset.range (k + 1), u (i + j))
     (l k : ℕ) (hk : k < 2 * m) : r (2 * m * l + k) = r (2 * m * l) * r k := by
-  have hp := periodic_of_antiperiod u m hanti
+  have hp := hanti.periodic_two_mul
   induction k with
   | zero => simp [hr₀]
   | succ k ih =>
@@ -54,17 +54,15 @@ theorem coefficient_blocks (u r : ℕ → R) {m : ℕ} (hr₀ : r 0 = 1)
       have h₀ := hmaster i k
       have h₁ := hmaster i (2 * m * l + k)
       have hshift : u (i + (2 * m * l + k)) = u (i + k) := by
-        have h := hp.nat_mul l (i + k)
-        change u (i + k + l * (2 * m)) = u (i + k) at h
-        rw [Nat.mul_comm l] at h
-        simpa only [Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h
+        simpa only [Nat.cast_id, Nat.mul_comm l, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc]
+          using hp.nat_mul l (i + k)
       rw [hshift, ih (by omega), Nat.add_assoc, sum_length_periodic u m hanti] at h₁
       apply mul_right_cancel₀ (mul_ne_zero (by norm_num : (2 : R) ≠ 0) hi)
       linear_combination -h₁ + r (2 * m * l) * h₀
 
 /-- The second half of the initial coefficient block vanishes. -/
 theorem coefficient_gap (u r : ℕ → R) {m : ℕ}
-    (hanti : ∀ i, u (i + m) = -u i)
+    (hanti : Function.Antiperiodic u m)
     (hmin : ∀ k, 0 < k → k < 2 * m → ¬(u k = u 0 ∧ u (k + 1) = u 1))
     (hmaster : ∀ i k, r k * (u i + u (i + k)) =
       2 * r (k + 1) * ∑ j ∈ Finset.range (k + 1), u (i + j))

@@ -143,6 +143,11 @@ triangular with respect to a linear order on the stages. -/
 def IsExplicit [LinearOrder ι] [Zero R] (rk : RungeKutta ι R) : Prop :=
   ∀ i j, i ≤ j → rk.A i j = 0
 
+theorem IsExplicit.abscissa_zero [CommSemiring R] {s : ℕ}
+    {rk : RungeKutta (Fin s) R} (hexp : IsExplicit rk) (hs : 0 < s) :
+    rk.abscissa ⟨0, hs⟩ = 0 :=
+  Finset.sum_eq_zero fun j _ => hexp _ j (Nat.zero_le j.val)
+
 theorem explicitEuler_isExplicit [Zero R] [One R] :
     IsExplicit (explicitEuler R) := by
   intro i j _

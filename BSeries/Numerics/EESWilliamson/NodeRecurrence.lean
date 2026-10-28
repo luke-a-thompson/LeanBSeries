@@ -73,11 +73,9 @@ theorem stabilityCoeff_three_ne_quarter {rk : RungeKutta (Fin s) R}
   obtain ⟨t, ht, _⟩ := exists_forwardBackward_bidiagonal hs hexp hcons hanti
   have h := forwardBackward_node_recurrence_raw hs hexp hcons hdet hanti ht
     (s - 1) (by omega)
-  have hc₀ : rk.abscissa ⟨0, by omega⟩ = 0 := by
-    exact Finset.sum_eq_zero fun j _ => hexp _ j (by change 0 ≤ j.val; omega)
   have heq : (⟨s - 1 + 1, by omega⟩ : Fin (s + s)) =
       (⟨0, by omega⟩ : Fin s).natAdd s := Fin.ext (by simp; omega)
-  rw [hr, heq, abscissa_forwardBackward_right _ hcons, hc₀] at h
+  rw [hr, heq, abscissa_forwardBackward_right _ hcons, hexp.abscissa_zero] at h
   norm_num at h
 
 /-- Normalizing gives the homogeneous recurrence for the centered nodes. -/

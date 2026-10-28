@@ -33,21 +33,11 @@ theorem natDegree_stagePolynomial_le {rk : RungeKutta (Fin s) R} (hexp : IsExpli
   exact stageWeight_tallTree_eq_zero_of_lt hexp k i hk
 
 theorem linearIndependent_stagePolynomial {rk : RungeKutta (Fin s) R}
-    (hexp : IsExplicit rk) (hdet : rk.krylovMatrix.det ≠ 0) :
+    (hdet : rk.krylovMatrix.det ≠ 0) :
     LinearIndependent R (stagePolynomial rk) := by
   classical
-  apply Fintype.linearIndependent_iff.mpr
-  intro g hg i
-  have h : g ᵥ* rk.krylovMatrix = 0 := by
-    ext k
-    change (∑ j, g j * stageWeight rk (PTree.tallTree k.val) j) = 0
-    have h := congrArg (fun p : R[X] => p.coeff k.val) hg
-    simpa only [finsetSum_coeff, coeff_smul, coeff_stagePolynomial hexp, coeff_zero,
-      smul_eq_mul] using h
-  have heq : g = 0 := Matrix.vecMul_injective_iff_isUnit.mpr
-    ((Matrix.isUnit_iff_isUnit_det _).mpr (isUnit_iff_ne_zero.mpr hdet))
-      (by simpa using h)
-  exact congrFun heq i
+  exact (Matrix.linearIndependent_rows_of_det_ne_zero hdet).map'
+    (Polynomial.ofFn s) (LinearMap.ker_eq_bot.mpr (Polynomial.injective_ofFn s))
 
 /-- The bidiagonal Krylov identity makes each stage polynomial an eigenvector. -/
 theorem IsKrylovBidiagonal.stagePolynomial {rk : RungeKutta (Fin s) R}

@@ -32,9 +32,8 @@ theorem secondOrder_card_nodes {K : Type*} [Field K] [DecidableEq K] {s : ℕ} (
       intro h
       apply ha
       have h := congrArg (fun p : K[X] => p.coeff 2) h
-      simpa only [p, coeff_add, coeff_C_mul, coeff_X_pow, coeff_X, coeff_C,
-        coeff_zero, show (2 : ℕ) ≠ 0 by decide, show (1 : ℕ) ≠ 2 by decide,
-        ite_false, ite_true, mul_zero, mul_one, add_zero] using h
+      norm_num only [p, coeff_add, coeff_C_mul, coeff_X_pow, coeff_X, coeff_C, coeff_zero] at h
+      simpa using h
     have hdeg : p.natDegree ≤ 2 := by dsimp [p]; compute_degree
     by_contra! hcard
     apply hp (eq_zero_of_natDegree_lt_card_of_eval_eq_zero p
@@ -76,7 +75,7 @@ theorem forwardBackward_card_nodes [DecidableEq R] {s : ℕ} (hs : 2 ≤ s)
     simp only [c, dite_eq_left i.isLt]
   have hc₀ : c 0 = 0 := by
     rw [hc ⟨0, by omega⟩]
-    exact Finset.sum_eq_zero fun j _ => isExplicit_forwardBackward rk hexp _ j (by change 0 ≤ j.val; omega)
+    exact (isExplicit_forwardBackward rk hexp).abscissa_zero _
   have hdet := det_krylovMatrix_ne_zero (isExplicit_forwardBackward rk hexp)
     (forwardBackward_subdiagonal_ne_zero (by omega) hexp hcons hanti)
   obtain ⟨t, ht, _⟩ := exists_forwardBackward_bidiagonal hs hexp hcons hanti
@@ -89,15 +88,11 @@ theorem forwardBackward_card_nodes [DecidableEq R] {s : ℕ} (hs : 2 ≤ s)
     (fun k hk => by
       rw [hc ⟨k, by omega⟩, hc ⟨k + 2, hk⟩, hc ⟨k + 1, by omega⟩]
       linear_combination forwardBackward_node_recurrence_raw hs hexp hcons hdet hanti ht k hk)
-    (fun i j hij => by
-      apply hpairs
-      have h₀ := congrArg Prod.fst hij
-      have h₁ := congrArg Prod.snd hij
-      dsimp only at h₀ h₁
-      rw [hc ⟨i.val, by have := i.isLt; omega⟩, hc ⟨j.val, by have := j.isLt; omega⟩] at h₀
-      rw [hc ⟨i.val + 1, by have := i.isLt; omega⟩,
-        hc ⟨j.val + 1, by have := j.isLt; omega⟩] at h₁
-      exact Prod.ext h₀ h₁)
+    (by
+      convert hpairs using 1
+      funext i
+      exact Prod.ext (hc ⟨i.val, by have := i.isLt; omega⟩)
+        (hc ⟨i.val + 1, by have := i.isLt; omega⟩))
   simpa only [hc] using h
 
 theorem forwardBackward_krylovSubdiagonal_ne_zero {s : ℕ} (hs : 2 ≤ s)
@@ -137,12 +132,7 @@ theorem abscissa_injective_of_hasAntisymOrder {s : ℕ} (hs : 2 ≤ s)
       abscissa_forwardBackward_left rk i
     simp only [abscissa_forwardBackward_left, hci] at h
     exact Ne.symm (sub_ne_zero.mp h)
-  intro i j hij
-  apply Fin.ext
-  rcases lt_trichotomy i.val j.val with h | h | h
-  · exact False.elim (hne i j h hij)
-  · exact h
-  · exact False.elim (hne j i h hij.symm)
+  exact Function.Injective.of_lt_imp_ne hne
 
 /-- The output eigenvector excludes the output node from all but the last original stage. -/
 theorem abscissa_ne_one_of_lt_last {s : ℕ} (hs : 2 ≤ s)
@@ -152,11 +142,9 @@ theorem abscissa_ne_one_of_lt_last {s : ℕ} (hs : 2 ≤ s)
     (i : Fin s) (hi : i.val + 1 < s) : rk.abscissa i ≠ 1 := by
   obtain ⟨t, ht, _⟩ := exists_forwardBackward_bidiagonal hs hexp hcons hanti
   have h := ht ⟨i.val, by have := i.isLt; omega⟩ ((⟨0, by omega⟩ : Fin s).natAdd s)
-  have hc₀ : rk.abscissa ⟨0, by omega⟩ = 0 :=
-    Finset.sum_eq_zero fun j _ => hexp _ j (by change 0 ≤ j.val; omega)
   simp only [← coeff_stagePolynomial (isExplicit_forwardBackward rk hexp),
     stagePolynomial_forwardBackward_output (by omega) hexp, coeff_stabilityPolynomial hexp,
-    abscissa_forwardBackward_right _ hcons, hc₀, sub_zero] at h
+    abscissa_forwardBackward_right _ hcons, hexp.abscissa_zero, sub_zero] at h
   have hci : rk.forwardBackward.abscissa ⟨i.val, by have := i.isLt; omega⟩ = rk.abscissa i :=
     abscissa_forwardBackward_left rk i
   rw [hci] at h
