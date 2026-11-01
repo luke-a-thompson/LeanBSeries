@@ -156,7 +156,7 @@ theorem methodChar_nil [Field R] {s : ℕ} (ls : LowStorage s R) :
     methodChar ls [] = 1 :=
   flowChar_nil ls s
 
-private theorem list_sum_range_eq {M : Type*} [AddCommMonoid M] :
+theorem list_sum_range_eq {M : Type*} [AddCommMonoid M] :
     ∀ (n : ℕ) (f : ℕ → M),
       ((List.range n).map f).sum = ∑ m ∈ Finset.range n, f m
   | 0, f => rfl

@@ -1,0 +1,58 @@
+diff --git a/HopfAlgebras/Hopf/LabelledAntipode.lean b/HopfAlgebras/Hopf/LabelledAntipode.lean
+index d3e6a7f..2aa7daa 100644
+--- a/HopfAlgebras/Hopf/LabelledAntipode.lean
++++ b/HopfAlgebras/Hopf/LabelledAntipode.lean
+@@ -172,7 +172,7 @@ theorem eraseLabels_antipode (φ : LRootedForest α) :
+           RootedForest.antipode (R := R) (LRootedForest.erase φ) := by
+     intro n
+     induction n using Nat.strong_induction_on with
+-    | h n ih =>
++    | _ n ih =>
+         intro φ hφn
+         by_cases hφ : φ = 0
+         · subst φ
+@@ -242,7 +242,7 @@ theorem mapLabels_antipode {β : Type w} (f : α → β) (φ : LRootedForest α)
+           antipode (R := R) (LRootedForest.mapLabels f φ) := by
+     intro n
+     induction n using Nat.strong_induction_on with
+-    | h n ih =>
++    | _ n ih =>
+         intro φ hφn
+         by_cases hφ : φ = 0
+         · subst φ
+@@ -294,7 +294,7 @@ theorem constLabel_antipode (a : α) (φ : RootedForest) :
+           antipode (R := R) (LRootedForest.constLabel a φ) := by
+     intro n
+     induction n using Nat.strong_induction_on with
+-    | h n ih =>
++    | _ n ih =>
+         intro φ hφn
+         by_cases hφ : φ = 0
+         · subst φ
+@@ -346,7 +346,7 @@ theorem eraseLabels_rightAntipode (φ : LRootedForest α) :
+           RootedForest.rightAntipode (R := R) (LRootedForest.erase φ) := by
+     intro n
+     induction n using Nat.strong_induction_on with
+-    | h n ih =>
++    | _ n ih =>
+         intro φ hφn
+         by_cases hφ : φ = 0
+         · subst φ
+@@ -399,7 +399,7 @@ theorem mapLabels_rightAntipode {β : Type w} (f : α → β) (φ : LRootedFores
+           rightAntipode (R := R) (LRootedForest.mapLabels f φ) := by
+     intro n
+     induction n using Nat.strong_induction_on with
+-    | h n ih =>
++    | _ n ih =>
+         intro φ hφn
+         by_cases hφ : φ = 0
+         · subst φ
+@@ -451,7 +451,7 @@ theorem constLabel_rightAntipode (a : α) (φ : RootedForest) :
+           rightAntipode (R := R) (LRootedForest.constLabel a φ) := by
+     intro n
+     induction n using Nat.strong_induction_on with
+-    | h n ih =>
++    | _ n ih =>
+         intro φ hφn
+         by_cases hφ : φ = 0
+         · subst φ
