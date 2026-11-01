@@ -11,6 +11,15 @@ The cosine EES family is formalised for every odd antisymmetric order `m >= 3`.
 The library proves exact classical order two, exact antisymmetric order `m`,
 Williamson 2N storage, and the minimum stage count `(m + 1) / 2`.
 
+The all-order Williamson transfer statement is
+[`BSeries.WilliamsonOrderTransfer`](BSeries/LieButcher/WilliamsonOrderTransfer.lean).
+It is currently an **unproved proposition**, not a theorem. The coefficient-path
+area closure, its connection to `LowStorage.toRK`, and the elementary-column
+grafting identity are proved in
+[`AreaTableau.lean`](BSeries/Numerics/Williamson/AreaTableau.lean).
+The remaining step is the homogeneous moment-polynomial reduction for arbitrary
+ordered coefficients, including its exact-flow specialization.
+
 ## Building
 
 Requires the sibling repository

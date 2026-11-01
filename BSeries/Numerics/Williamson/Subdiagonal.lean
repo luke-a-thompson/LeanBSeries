@@ -82,7 +82,7 @@ theorem toRK_ofSubdiagonal_eq_of_rowDifferenceCondition
   have hdiff (n : ℕ) : ∀ (i : Fin s), i.val = n → ∀ j,
       rk.rowDifference i j = ls.beta i j := by
     induction n using Nat.strong_induction_on with
-    | h n ih =>
+    | _ n ih =>
       intro i hin j
       rcases lt_trichotomy j i with hji | rfl | hij
       · have hip : 0 < i.val := by simp only [Fin.lt_def] at hji; omega
