@@ -1,0 +1,246 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=28mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}[lemma]{Theorem}
+\newtheorem{corollary}[lemma]{Corollary}
+\theoremstyle{remark}
+\newtheorem{example}[lemma]{Example}
+\newcommand{\one}{\mathbf 1}
+\newcommand{\area}{\operatorname{area}}
+\newcommand{\sh}{\mathbin{\amalg}}
+\title{Order transfer for Williamson methods}
+\author{}
+\date{}
+\begin{document}
+\maketitle
+
+The exponential lift of a Williamson method preserves its classical order. The argument below applies to every finite stage count and every order, including coefficient lists with zeros. Its main observation is that the coefficient path of a Williamson method is closed under taking signed areas. The theorem that iterated areas generate the shuffle algebra then reduces every ordered coefficient to classical Runge--Kutta moments.
+
+Fix $s\geq1$ and real coefficients $\alpha_i,\beta_i$, $1\leq i\leq s$. The classical method and its exponential lift are
+\begin{align*}
+ k_i&=\alpha_i k_{i-1}+h f(y_{i-1}),
+ &y_i&=y_{i-1}+\beta_i k_i,\\
+ Z_i&=\alpha_i Z_{i-1}+h F(Y_{i-1}),
+ &Y_i&=\exp(\beta_i Z_i)Y_{i-1},
+\end{align*}
+with $k_0=Z_0=0$. The lifted equation is $Y'=F(Y)Y$; the same argument applies to frozen vector fields in a general frame. Exponentials are exact, and the latest update acts on the left. This is Bazavov's lift \cite{Bazavov}. We prove equality with the exact formal expansion through the classical order. The usual consistency conclusion follows for sufficiently smooth equations.
+
+Write $e_i^T$ for the $i$th coordinate row and set
+\begin{equation}\label{eq:rows}
+ w_0=0,\qquad w_i=\alpha_iw_{i-1}+e_i^T,
+ \qquad \gamma_i=\beta_iw_i,\qquad
+ a_i=\sum_{j<i}\gamma_j,\qquad b^T=\sum_{j=1}^s\gamma_j.
+\end{equation}
+The matrix $A$ with rows $a_i$ is strictly lower triangular, and $(A,b)$ is the classical tableau. Let $x:[0,s]\to(\mathbb R^s)^*$ be the polygonal path
+\[
+ x(i-1+\theta)=a_i+\theta\gamma_i,
+ \qquad 0\leq\theta\leq1.
+\]
+Thus $x(0)=0$ and $x(s)=b^T$. For a column $u$, put $X_u(t)=x(t)u$. For scalar paths starting at zero, use the convention
+\[
+ \area(f,g)(t)=\int_0^t f\,dg-g\,df.
+\]
+Every integral involving $x$ below is an antiderivative of a polynomial on each segment. In particular, these are algebraic identities over the rationals in the method coefficients; no limiting argument is involved.
+
+\begin{lemma}[Closure under areas]\label{lem:area}
+For arbitrary columns $u,v$, define
+\[
+ D_A(u,v)=(Au)\odot v-(Av)\odot u,
+\]
+where $\odot$ denotes componentwise multiplication. Then
+\begin{equation}\label{eq:area}
+ \area(X_u,X_v)=X_{D_A(u,v)}
+\end{equation}
+as paths, including between stage points.
+\end{lemma}
+
+\begin{proof}
+We first prove the row identity
+\begin{equation}\label{eq:row-identity}
+ w_iD_A(u,v)=(a_i u)(w_i v)-(a_i v)(w_i u).
+\end{equation}
+It holds for $i=1$ since $a_1=0$ and the first row of $A$ vanishes. In the identity for $w_{i-1}$, replace $a_{i-1}$ by $a_i=a_{i-1}+\beta_{i-1}w_{i-1}$. The added terms cancel. The row $e_i^T$ also satisfies \eqref{eq:row-identity}, since $(Au)_i=a_i u$. Multiplying the previous-row identity by $\alpha_i$ and adding the coordinate-row identity proves the induction. This is the alternating row identity also used in \cite[Lemma 1]{TransferSix}.
+
+Multiplication by $\beta_i$ gives the same identity for $\gamma_i$. On segment $i$ we consequently have
+\begin{align*}
+ X_u\,dX_v-X_v\,dX_u
+ &=\bigl((a_i u+\theta\gamma_i u)\gamma_i v
+          -(a_i v+\theta\gamma_i v)\gamma_i u\bigr)\,d\theta\\
+ &=\gamma_iD_A(u,v)\,d\theta
+ =dX_{D_A(u,v)}.
+\end{align*}
+Both sides of \eqref{eq:area} start at zero, so their polynomial antiderivatives agree on every segment.
+\end{proof}
+
+The equality of paths in Lemma~\ref{lem:area} allows repeated application of the area operation. An equality only at the final endpoint would not suffice. We use the following algebraic generation theorem.
+
+\begin{theorem}[Diehl--Lyons--Prei\ss--Reizenstein]\label{thm:generation}
+Every word in the shuffle algebra is a shuffle polynomial in letters and their iterated areas. The expression can be chosen homogeneous in the number of occurrences of each letter.
+\end{theorem}
+
+This is \cite[Corollary 4.8]{Areas}; a further proof is given in \cite[Theorem 4.3]{Structure}. Here area is the antisymmetrisation of the half-shuffle, with the convention corresponding to $\int f\,dg-g\,df$. Reversing that convention changes signs but not the generated algebra. Homogeneity follows by taking the component with the prescribed letter counts. The coefficients can be chosen rational: in each homogeneous component, the asserted spanning property is a finite linear system with integer entries. Evaluated on a polynomial path, shuffle products become ordinary products and iterated areas become successive applications of $\area$.
+
+For columns $u_1,\ldots,u_m$, the chronological tensor is
+\begin{equation}\label{eq:tensor}
+ t_m(u_1,\ldots,u_m)
+ =\sum_{1\leq i_1\leq\cdots\leq i_m\leq s}
+ \frac{\prod_{r=1}^m(\gamma_{i_r}u_r)}{\prod_{j=1}^s n_j!},
+ \qquad n_j=\#\{r:i_r=j\}.
+\end{equation}
+It is the iterated integral $\int_{t_1<\cdots<t_m}dX_{u_1}(t_1)\cdots dX_{u_m}(t_m)$, as follows by splitting the simplex among the linear segments. Equivalently, it is the coefficient obtained by multiplying the chronological exponential series. Write $t_0=1$.
+
+For an ordinary, unordered rooted tree $\tau$, let $|\tau|$ be its number of vertices and define its tree factorial and stage elementary vector by
+\[
+ \tau!=|\tau|\prod_{\sigma\text{ child of }\tau}\sigma!,
+ \qquad
+ \Phi_\bullet=\one,\qquad
+ \Phi_{[\tau_1,\ldots,\tau_k]}
+ =\bigodot_{j=1}^k A\Phi_{\tau_j}.
+\]
+The empty product is $\one$, and $\bullet!=1$. Put $M_\tau=b^T\Phi_\tau$, assigning this moment weight $|\tau|$. The classical order-$p$ conditions are
+\begin{equation}\label{eq:classical-order}
+ M_\tau=\frac1{\tau!}\qquad (|\tau|\leq p).
+\end{equation}
+
+\begin{lemma}[Reduction to classical moments]\label{lem:moments}
+For any ordinary trees $\tau_1,\ldots,\tau_m$, the tensor $t_m(\Phi_{\tau_1},\ldots,\Phi_{\tau_m})$ is a universal polynomial in the moments $M_\sigma$, homogeneous of weight $\sum_j|\tau_j|$. The same polynomial gives the tensor at the prefix before stage $i$ when each $M_\sigma$ is replaced by $a_i\Phi_\sigma$.
+
+Under the substitution $M_\sigma=1/\sigma!$, this polynomial evaluates to
+\begin{equation}\label{eq:continuous-tensor}
+ \int_{0<x_1<\cdots<x_m<1}
+ \prod_{j=1}^m\frac{|\tau_j|}{\tau_j!}x_j^{|\tau_j|-1}
+ \,dx_1\cdots dx_m.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Apply Theorem~\ref{thm:generation} to the word with letters $u_1,\ldots,u_m$. By Lemma~\ref{lem:area}, each iterated area is $X_u$ for a column obtained by iterating $D_A$. If $\sigma=[\sigma_1,\ldots,\sigma_r]$ and $\tau=[\tau_1,\ldots,\tau_q]$, then
+\begin{equation}\label{eq:grafting}
+ D_A(\Phi_\sigma,\Phi_\tau)
+ =\Phi_{[\tau_1,\ldots,\tau_q,\sigma]}
+  -\Phi_{[\sigma_1,\ldots,\sigma_r,\tau]}.
+\end{equation}
+Both trees on the right have $|\sigma|+|\tau|$ vertices. Thus each iterated area is $X_u$ for a linear combination of elementary vectors of the required weight. Its endpoint is $b^Tu$, a linear combination of classical moments. Shuffle products give products of those moments. The construction uses only the word and rooted-tree operations, so its polynomial is independent of the number of stages and the coefficients.
+
+At the prefix before stage $i$, the endpoint of $x$ is $a_i$. The path identity remains valid there. Hence the same construction replaces $b^T\Phi_\sigma$ by $a_i\Phi_\sigma$. Strict lower triangularity ensures that truncating the recurrence does not change any earlier component of an elementary vector.
+
+To evaluate the resulting polynomial, realise the classical operations on $\mathbb Q[x]$ by
+\[
+ (Au)(x)=\int_0^x u(y)\,dy,\qquad b^Tu=\int_0^1u(x)\,dx,
+\]
+with ordinary multiplication in place of $\odot$. These integrals mean formal polynomial antiderivatives. Induction on trees gives
+\begin{equation}\label{eq:continuous-tree}
+ \Phi_\tau(x)=\frac{|\tau|}{\tau!}x^{|\tau|-1},
+ \qquad (A\Phi_\tau)(x)=\frac{x^{|\tau|}}{\tau!},
+ \qquad b^T\Phi_\tau=\frac1{\tau!}.
+\end{equation}
+For $X_u(x)=\int_0^x u(y)\,dy$, the area identity becomes
+\[
+ \area(X_u,X_v)(x)
+ =\int_0^x\bigl((Au)v-(Av)u\bigr)(y)\,dy
+ =X_{D_A(u,v)}(x).
+\]
+Thus the same word decomposition and the same grafting rule evaluate the moment polynomial as the iterated integral \eqref{eq:continuous-tensor}.
+\end{proof}
+
+\begin{example}[The third-order condition]
+The two-letter shuffle identity and Lemma~\ref{lem:area} give
+\[
+ 2t_2(u,v)=(b^Tu)(b^Tv)+b^TD_A(u,v).
+\]
+Taking $c=A\one$, $u=c$, and $v=\one$ yields
+\[
+ 2t_2(c,\one)=(b^Tc)(b^T\one)+b^TAc-b^Tc^2.
+\]
+The classical third-order conditions therefore give $t_2(c,\one)=\tfrac12(\tfrac12+\tfrac16-\tfrac13)=\tfrac16$, the additional chronological condition. Higher orders use iterated areas in place of this single area.
+\end{example}
+
+\begin{theorem}[Order transfer]\label{thm:transfer}
+Let $p\geq1$. If the classical tableau of a finite Williamson coefficient list satisfies \eqref{eq:classical-order}, then its exponential lift has order of consistency at least $p$. No nonzero-coefficient, distinct-node, or positivity assumption is required.
+\end{theorem}
+
+\begin{proof}
+We use the ordered-tree expansion of frozen exponentials \cite[Theorem 2.5 and Corollary 2.6]{Owren}. An ordered operator tree $t=(t_1,\ldots,t_m)$ has degree $|t|-1$; its singleton tree represents the identity operator. Let $g(t)$ be its coefficient in the numerical step, and $g_i(t)$ its coefficient at the evaluation point $Y_{i-1}$. Multiplication of the exponential series gives
+\begin{equation}\label{eq:ordered-recursion}
+ g(\bullet)=1,\qquad
+ g(t)=t_m\bigl(g_{\mathrm{st}}(t_1),\ldots,g_{\mathrm{st}}(t_m)\bigr),
+ \qquad g_{\mathrm{st}}(u)=(g_i(u))_{i=1}^s.
+\end{equation}
+The stage coefficients use the same formula with the path stopped before stage $i$. The exact coefficients are
+\begin{equation}\label{eq:exact-recursion}
+ e(\bullet)=1,\qquad
+ e(t)=\frac{\prod_{j=1}^m e(t_j)}
+ {\prod_{j=1}^m\bigl(|t_1|+\cdots+|t_j|\bigr)}.
+\end{equation}
+Here the denominator is the elementary iterated integral of monomials; it is also Owren's exact-flow recursion in factorial-normalised form.
+
+We prove by induction on $|t|$ that $g(t)$ is a universal homogeneous moment polynomial $Q_t$ of weight $|t|-1$, that $g_i(t)$ is its prefix substitution, and that $Q_t$ evaluates to $e(t)$ when $M_\tau=1/\tau!$. For the singleton tree take $Q_\bullet=1$.
+
+Suppose these claims hold for the children of $t$. In a child's prefix polynomial, a monomial becomes
+\begin{equation}\label{eq:prefix}
+ \prod_{k=1}^r M_{\sigma_k}
+ \ \longmapsto\
+ \prod_{k=1}^r(a_i\Phi_{\sigma_k})
+ =\bigl(\Phi_{[\sigma_1,\ldots,\sigma_r]}\bigr)_i.
+\end{equation}
+The empty monomial gives $\Phi_\bullet$. Consequently $g_{\mathrm{st}}(t_j)$ is a linear combination of elementary vectors of weight $|t_j|$. Apply Lemma~\ref{lem:moments} to \eqref{eq:ordered-recursion}, expanding multilinearly. This constructs $Q_t$ of weight $\sum_j|t_j|=|t|-1$ and proves its prefix formula.
+
+It remains to identify its exact value. In the polynomial realisation \eqref{eq:continuous-tree}, a prefix moment is $x^{|\sigma|}/\sigma!$. Homogeneity and the induction hypothesis therefore turn the child stage vector into $e(t_j)x^{|t_j|-1}$. The last part of Lemma~\ref{lem:moments} now gives
+\[
+ Q_t\big|_{M_\sigma=1/\sigma!}
+ =\int_{0<x_1<\cdots<x_m<1}
+   \prod_{j=1}^m e(t_j)x_j^{|t_j|-1}\,dx_1\cdots dx_m
+ =e(t).
+\]
+This completes the induction for all ordered trees, with no order bound.
+
+If $|t|-1\leq p$, every moment in $Q_t$ has weight at most $p$. The assumed classical order conditions thus give $g(t)=e(t)$. Owren's order criterion yields consistency order at least $p$.
+\end{proof}
+
+\begin{corollary}[Effective symmetry]\label{cor:symmetry}
+Let $\Phi_h$ be a classical Williamson step and $\Psi_h$ its exponential lift. If the classical B-series satisfies
+\[
+ \Phi_{-h}\circ\Phi_h=\operatorname{id}+O(h^{q+1}),
+\]
+then the ordered expansion of the lifted composition satisfies
+\[
+ \Psi_{-h}\circ\Psi_h=\operatorname{id}+O(h^{q+1}).
+\]
+\end{corollary}
+
+\begin{proof}
+Concatenate the two Williamson recurrences, setting the first $\alpha$ of the second block to zero to reset the increment register. A negative step is represented with step size $h$ by replacing $\beta_i$ with $-\beta_i$: its increment register is the negative of the original negative-step register. Thus both compositions are the classical and exponential versions of one Williamson list.
+
+The classical identity assumption says that every moment of this combined tableau of weight at most $q$ vanishes. For an ordered tree of positive degree at most $q$, the polynomial $Q_t$ constructed in the proof of Theorem~\ref{thm:transfer} is homogeneous of positive weight and has no constant term. All its monomials therefore vanish. The singleton coefficient remains one, which is the ordered series of the identity.
+\end{proof}
+
+\begin{example}[The missing seventh-order directions]
+Repeated-tail tensor identities and shuffle relations leave three scalar conditions at weight seven in \cite{TransferSix}. The path identity supplies the additional information. In particular,
+\begin{align*}
+ \area\bigl(\area(X_u,X_v),\area(X_u,\area(X_u,X_v))\bigr)(s)
+ &=b^TD_A\bigl(D_A(u,v),D_A(u,D_A(u,v))\bigr),\\
+ \area\bigl(\area(X_u,X_v),\area(X_u,X_w)\bigr)(s)
+ &=b^TD_A\bigl(D_A(u,v),D_A(u,w)\bigr).
+\end{align*}
+Use $u=\one$, $v=c$ in the first identity, and $u=\one$, $v=c$, $w=c^2$ or $Ac$ in the second. The right sides are linear combinations of classical moments of weight seven. In the word orders used in \cite[Appendix A and Section 6.5]{TransferSix}, the left-side coefficient rows pair with the two displayed null vectors as $-36$ and $-8$, respectively. They therefore determine each previously missing direction. Theorem~\ref{thm:generation} supplies the corresponding information at every higher weight.
+\end{example}
+
+\begin{thebibliography}{9}
+\bibitem{Bazavov}
+A.~Bazavov, \emph{Commutator-free Lie group methods with minimum storage requirements and reuse of exponentials}, BIT Numerical Mathematics 62 (2022), 745--771. \href{https://doi.org/10.1007/s10543-021-00892-x}{doi:10.1007/s10543-021-00892-x}.
+
+\bibitem{Areas}
+J.~Diehl, T.~Lyons, R.~Prei\ss, and J.~Reizenstein, \emph{Areas of areas generate the shuffle algebra}, \href{https://arxiv.org/abs/2002.02338}{arXiv:2002.02338}, version 2 (2021).
+
+\bibitem{Structure}
+C.~Salvi, J.~Diehl, T.~Lyons, R.~Preiss, and J.~Reizenstein, \emph{A structure theorem for streamed information}, Journal of Algebra 634 (2023), 911--938. \href{https://arxiv.org/abs/2212.00134}{arXiv:2212.00134}.
+
+\bibitem{Owren}
+B.~Owren, \emph{Order conditions for commutator-free Lie group methods}, Journal of Physics A: Mathematical and General 39 (2006), 5585--5599. \href{https://www.math.ntnu.no/preprint/numerics/2005/N7-2005.pdf}{Preprint, Numerics No.~7/2005}.
+
+\bibitem{TransferSix}
+Anonymous, \emph{Order transfer through six for Williamson low-storage Runge--Kutta methods}, research preprint, version 1.0.0-candidate (20 October 2026). \href{https://doi.org/10.5281/zenodo.23501588}{doi:10.5281/zenodo.23501588}; \href{https://github.com/ipitchford/williamson-order-transfer/blob/main/paper.md}{manuscript source}.
+\end{thebibliography}
+\end{document}
