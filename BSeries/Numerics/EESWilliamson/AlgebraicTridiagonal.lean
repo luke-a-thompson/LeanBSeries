@@ -31,9 +31,7 @@ theorem forwardBackward_reverseShift_quadratic {s : ℕ} (hs : 2 ≤ s)
   have hdet := det_krylovMatrix_ne_zero hexpc hsub
   obtain ⟨t, ht, ht₁⟩ := exists_forwardBackward_bidiagonal hs hexp hcons hanti
   let c : ℕ → R := fun k => if hk : k < s + s then rk.forwardBackward.abscissa ⟨k, hk⟩ else 0
-  let a := 1 - 4 * stabilityCoeff rk 3
-  let b := -4 * stabilityCoeff rk 3
-  let d := 6 * stabilityCoeff rk 3 - 1
+  let q := 2 * stabilityCoeff rk 3 / (1 - 4 * stabilityCoeff rk 3)
   have hc (k : Fin (s + s)) : c k.val = rk.forwardBackward.abscissa k := by
     simp only [c, dite_eq_left k.isLt]
   have hc₀ : c 0 = 0 := by
@@ -43,20 +41,21 @@ theorem forwardBackward_reverseShift_quadratic {s : ℕ} (hs : 2 ≤ s)
   have ht₁' : krylovSubdiagonal t 1 = 1 := by
     simpa only [krylovSubdiagonal_succ t 0 (by omega)] using ht₁
   have hrec (k : ℕ) (hk : k + 2 < s + s) :
-      a * (c k + c (k + 2)) + b * c (k + 1) + d = 0 := by
+      1 * (c k + c (k + 2)) + (-2 * q) * c (k + 1) + (q - 1) = 0 := by
     rw [hc ⟨k, by omega⟩, hc ⟨k + 2, hk⟩, hc ⟨k + 1, by omega⟩]
-    linear_combination forwardBackward_node_recurrence_raw hs hexp hcons hdet hanti ht k hk
+    dsimp [q]
+    linear_combination forwardBackward_node_recurrence hs hexp hcons hanti k hk
   have hdiff (k : ℕ) (hk : k < s + s) :
       krylovSubdiagonal t (k + 1) - krylovSubdiagonal t k = 1 - 2 * c k := by
     rw [hc ⟨k, hk⟩]
     exact forwardBackward_subdiagonal_difference hexp hcons hdet hanti ht ⟨k, hk⟩
   have hrel (k : ℕ) (hk : k < s) :
-      quadraticRelation (Polynomial.bidiagonal c (krylovSubdiagonal t)) a b d
-        (a * c 1 + d) (X ^ k) = 0 :=
-    quadraticRelation_X_pow c _ a b d _ ht₀ k (hrec k (by omega))
-      (secondOrder_lowering_recurrence c _ a b d ht₀ ht₁' (by dsimp [a, b, d]; ring)
+      quadraticRelation (Polynomial.bidiagonal c (krylovSubdiagonal t)) 1 (-2 * q) (q - 1)
+        (1 * c 1 + (q - 1)) (X ^ k) = 0 :=
+    quadraticRelation_X_pow c _ 1 (-2 * q) (q - 1) _ ht₀ k (hrec k (by omega))
+      (secondOrder_lowering_recurrence c _ 1 (-2 * q) (q - 1) ht₀ ht₁' (by ring)
         hrec hdiff k (by omega))
-  have hdual := quadraticDual_apply c _ a b d hc₀ ht₀ ht₁' hrel
+  have hdual := quadraticDual_apply c _ 1 (-2 * q) (q - 1) hc₀ ht₀ ht₁' hrel
     (stagePolynomial rk.forwardBackward (i.castAdd s))
     (le_trans (natDegree_stagePolynomial_le hexpc _) (by simp only [Fin.val_castAdd]; omega))
   have hX : X * stagePolynomial rk.forwardBackward (i.castAdd s) =
@@ -64,23 +63,17 @@ theorem forwardBackward_reverseShift_quadratic {s : ℕ} (hs : 2 ≤ s)
     simpa only [smul_eq_C_mul] using
       (reverseShift_stagePolynomial hexpc hdet (i.castAdd s)
         (by simp only [Fin.val_castAdd]; have := i.isLt; omega)).symm
-  have h := quadraticDual_eigen_coefficient _ a b d _ (c 1)
+  have h := quadraticDual_eigen_coefficient _ 1 (-2 * q) (q - 1) _ (c 1)
     (stagePolynomial rk.forwardBackward) rk.forwardBackward.abscissa
     (rk.forwardBackward.reverseShift (i.castAdd s))
     (linearIndependent_stagePolynomial hdet) (ht.stagePolynomial hexpc c hc)
     (i.castAdd s) j hX hdual (by intro h; have := congrArg Fin.val h; simp at this; omega)
   have hsum := hrec (i.val - 1) (by have := i.isLt; omega)
-  have hprod := secondOrder_adjacent_product c a b d hc₀ hrec (i.val - 1)
+  have hprod := secondOrder_adjacent_product c 1 (-2 * q) (q - 1) hc₀ hrec (i.val - 1)
     (by have := i.isLt; omega)
   have hprev : i.val - 1 + 1 = i.val := by omega
   have hnext : i.val - 1 + 2 = i.val + 1 := by omega
   rw [hprev, hnext] at hsum hprod
-  have ha : a ≠ 0 := by
-    intro h
-    apply stabilityCoeff_three_ne_quarter hs hexp hcons hanti
-    dsimp [a] at h
-    linear_combination -h / 4
-  apply (mul_eq_zero_iff_left ha).mp
   have hci : c i.val = rk.forwardBackward.abscissa (i.castAdd s) := hc (i.castAdd s)
   rw [hci, hc ⟨i.val - 1, by omega⟩,
     hc ⟨i.val + 1, by have := i.isLt; omega⟩] at hsum hprod

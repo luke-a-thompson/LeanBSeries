@@ -84,17 +84,15 @@ theorem forwardBackward_node_regularity {s : ℕ} (hs : 2 ≤ s)
       · rw [heq, hantis, add_neg_cancel, mul_zero]
       · rw [hzero k (by omega), zero_mul]
   have hblock := SecondOrder.coefficient_blocks u (stabilityCoeff rk) (m := m) rfl hanti_m hmin hmaster
-  have hgap := SecondOrder.coefficient_gap u (stabilityCoeff rk) hanti_m hmin hmaster
   have hdeg : (stabilityPolynomial rk).natDegree = s := by
     apply natDegree_eq_of_le_of_coeff_ne_zero (natDegree_stabilityPolynomial_le rk)
     rw [coeff_stabilityPolynomial hexp]
     exact stabilityCoeff_last_ne_zero (by omega) hexp hcons hanti
-  have hle := SecondOrder.natDegree_le_half_period (stabilityPolynomial rk)
+  have hle := SecondOrder.natDegree_lt_period (stabilityPolynomial rk)
     (separable_stabilityPolynomial_mul_neg (by omega) hexp hcons hanti).isCoprime hm
     (by simpa only [coeff_stabilityPolynomial hexp] using hblock)
-    (by simpa only [coeff_stabilityPolynomial hexp] using hgap)
   rw [hdeg] at hle
-  have hms' : m = s := by omega
+  have hms' : m = s := (Nat.eq_of_dvd_of_lt_two_mul (by omega) hms hle).symm
   subst m
   refine ⟨SecondOrder.coefficients_ne_zero u (stabilityCoeff rk) rfl rfl hmin hmaster, ?_⟩
   intro i j hij

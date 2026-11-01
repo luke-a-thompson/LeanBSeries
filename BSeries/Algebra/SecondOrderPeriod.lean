@@ -60,7 +60,7 @@ theorem sequence_add_of_neg (a x y : R) {s : ℕ}
 /-- The least positive period is twice the least sign-changing shift. -/
 theorem exists_half_period [CharZero R] (a y : R) {s : ℕ} (hs : 0 < s)
     (hsign : (step a ^ s) (1, y) = -(1, y)) :
-    ∃ m : ℕ, 0 < m ∧ m ≤ s ∧
+    ∃ m : ℕ, 0 < m ∧ m ∣ s ∧
       minimalPeriod (step a) (1, y) = 2 * m ∧
       Antiperiodic (sequence a 1 y) m := by
   let p := minimalPeriod (step a) (1, y)
@@ -86,7 +86,10 @@ theorem exists_half_period [CharZero R] (a y : R) {s : ℕ} (hs : 0 < s)
   have hd : p ∣ 2 * m := hmperiod.minimalPeriod_dvd
   have hmlt : m < p := Nat.mod_lt _ hp
   have hpm : p = 2 * m := (Nat.eq_of_dvd_of_lt_two_mul (by omega) hd (by omega)).symm
-  exact ⟨m, hm, Nat.mod_le _ _, hpm, sequence_add_of_neg a 1 y hmstep⟩
+  refine ⟨m, hm, ?_, hpm, sequence_add_of_neg a 1 y hmstep⟩
+  apply Nat.dvd_of_mul_dvd_mul_left (by decide : 0 < 2)
+  rw [← hpm]
+  exact hperiod.minimalPeriod_dvd
 
 theorem sum_period (u : ℕ → R) (m : ℕ) (hm : Antiperiodic u m) (i : ℕ) :
     ∑ j ∈ Finset.range (2 * m), u (i + j) = 0 := by

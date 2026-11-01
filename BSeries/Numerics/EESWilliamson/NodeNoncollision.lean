@@ -1,8 +1,6 @@
 import BSeries.Numerics.EESWilliamson.NodePeriod
 import BSeries.Numerics.EESWilliamson.StagePolynomials
 import BSeries.Algebra.PolynomialBidiagonal
-import Mathlib.Combinatorics.Pigeonhole
-import Mathlib.Tactic.ComputeDegree
 
 /-!
 # Distinct nodes from the second-order recurrence
@@ -26,39 +24,34 @@ theorem secondOrder_card_nodes {K : Type*} [Field K] [DecidableEq K] {s : ℕ} (
   have hfiber (y : K) :
       (Finset.univ.filter (fun i : Fin (s + s - 1) => c i.val = y)).card ≤ 2 := by
     let S := Finset.univ.filter (fun i : Fin (s + s - 1) => c i.val = y)
-    let p : K[X] := C a * X ^ 2 + C (b * y + d) * X +
-      C (a * y ^ 2 + d * y - (a * c 1 + d) * c 1)
-    have hp : p ≠ 0 := by
-      intro h
-      apply ha
-      have h := congrArg (fun p : K[X] => p.coeff 2) h
-      norm_num only [p, coeff_add, coeff_C_mul, coeff_X_pow, coeff_X, coeff_C, coeff_zero] at h
-      simpa using h
-    have hdeg : p.natDegree ≤ 2 := by dsimp [p]; compute_degree
-    by_contra! hcard
-    apply hp (eq_zero_of_natDegree_lt_card_of_eval_eq_zero p
-      (f := fun i : S => c (i.val.val + 1)) ?_ ?_ ?_)
-    · intro i j hij
-      apply Subtype.ext
+    obtain hS | ⟨i, hi⟩ := S.eq_empty_or_nonempty
+    · simp_all [S]
+    apply (Finset.card_le_card_of_injOn (t :=
+      {a * c (i.val + 1), -(b * y + d) - a * c (i.val + 1)})
+      (fun j : Fin (s + s - 1) => a * c (j.val + 1)) ?_ ?_).trans Finset.card_le_two
+    · intro j hj
+      have hiq := secondOrder_invariant c a b d hc₀ hc i.val (by have := i.isLt; omega)
+      have hjq := secondOrder_invariant c a b d hc₀ hc j.val (by have := j.isLt; omega)
+      rw [(Finset.mem_filter.mp hi).2] at hiq
+      rw [(Finset.mem_filter.mp hj).2] at hjq
+      have h : (a * c (j.val + 1) - a * c (i.val + 1)) *
+          (a * c (j.val + 1) + a * c (i.val + 1) + b * y + d) = 0 := by
+        linear_combination a * (hjq - hiq)
+      simp only [Finset.mem_coe, Finset.mem_insert, Finset.mem_singleton]
+      rcases mul_eq_zero.mp h with h | h
+      · exact Or.inl (sub_eq_zero.mp h)
+      · right; linear_combination h
+    · intro j hj k hk h
       apply hpairs
-      exact Prod.ext ((Finset.mem_filter.mp i.property).2.trans
-        (Finset.mem_filter.mp j.property).2.symm) hij
-    · intro i
-      have h := secondOrder_invariant c a b d hc₀ hc i.val.val (by have := i.val.isLt; omega)
-      rw [(Finset.mem_filter.mp i.property).2] at h
-      simp only [p, eval_add, eval_mul, eval_C, eval_pow, eval_X]
-      linear_combination h
-    · simpa only [Fintype.card_coe] using hdeg.trans_lt hcard
-  by_contra h
-  have hn : nodes.card * 2 < (Finset.univ : Finset (Fin (s + s - 1))).card := by
-    simp only [Finset.card_univ, Fintype.card_fin]
-    change ¬ s ≤ nodes.card at h
-    omega
-  obtain ⟨y, _, hy⟩ := Finset.exists_lt_card_fiber_of_mul_lt_card_of_maps_to
-    (f := fun i : Fin (s + s - 1) => c i.val) (t := nodes)
+      exact Prod.ext ((Finset.mem_filter.mp hj).2.trans
+        (Finset.mem_filter.mp hk).2.symm) (mul_left_cancel₀ ha h)
+  have hcount := Finset.sum_le_sum (s := nodes) (fun y _ => hfiber y)
+  rw [← Finset.card_eq_sum_card_fiberwise (f := fun i : Fin (s + s - 1) => c i.val)
     (fun i _ => Finset.mem_image.mpr ⟨⟨i.val, by have := i.isLt; omega⟩,
-      Finset.mem_univ _, rfl⟩) hn
-  exact (not_lt_of_ge (hfiber y)) hy
+      Finset.mem_univ _, rfl⟩)] at hcount
+  simp only [Finset.card_univ, Fintype.card_fin, Finset.sum_const, smul_eq_mul] at hcount
+  change s ≤ nodes.card
+  omega
 
 variable {R : Type*} [Field R] [CharZero R] [Invertible (2 : R)]
 
@@ -76,18 +69,12 @@ theorem forwardBackward_card_nodes [DecidableEq R] {s : ℕ} (hs : 2 ≤ s)
   have hc₀ : c 0 = 0 := by
     rw [hc ⟨0, by omega⟩]
     exact (isExplicit_forwardBackward rk hexp).abscissa_zero _
-  have hdet := det_krylovMatrix_ne_zero (isExplicit_forwardBackward rk hexp)
-    (forwardBackward_subdiagonal_ne_zero (by omega) hexp hcons hanti)
-  obtain ⟨t, ht, _⟩ := exists_forwardBackward_bidiagonal hs hexp hcons hanti
-  have ha : 1 - 4 * stabilityCoeff rk 3 ≠ 0 := by
-    intro h
-    apply stabilityCoeff_three_ne_quarter hs hexp hcons hanti
-    linear_combination -h / 4
-  have h := secondOrder_card_nodes (by omega : 0 < s) c (1 - 4 * stabilityCoeff rk 3)
-    (-4 * stabilityCoeff rk 3) (6 * stabilityCoeff rk 3 - 1) ha hc₀
+  let q := 2 * stabilityCoeff rk 3 / (1 - 4 * stabilityCoeff rk 3)
+  have h := secondOrder_card_nodes (by omega : 0 < s) c 1 (-2 * q) (q - 1) one_ne_zero hc₀
     (fun k hk => by
       rw [hc ⟨k, by omega⟩, hc ⟨k + 2, hk⟩, hc ⟨k + 1, by omega⟩]
-      linear_combination forwardBackward_node_recurrence_raw hs hexp hcons hdet hanti ht k hk)
+      dsimp [q]
+      linear_combination forwardBackward_node_recurrence hs hexp hcons hanti k hk)
     (by
       convert hpairs using 1
       funext i

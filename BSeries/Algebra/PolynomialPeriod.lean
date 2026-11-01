@@ -9,7 +9,7 @@ import Mathlib.RingTheory.Coprime.Basic
 /-!
 # Polynomial coefficients along a periodic recurrence
 
-The centered master identity repeats coefficient blocks of length `2m`. Coefficients in the second half of each block vanish, so a shorter node period would give a nonconstant even factor shared by `P(X)` and `P(-X)`.
+The centered master identity repeats coefficient blocks of length `2m`. Coprimality with reflection makes the even factor constant, so the polynomial degree is smaller than one full block.
 -/
 
 namespace SecondOrder
@@ -60,27 +60,6 @@ theorem coefficient_blocks (u r : ℕ → R) {m : ℕ} (hr₀ : r 0 = 1)
       apply mul_right_cancel₀ (mul_ne_zero (by norm_num : (2 : R) ≠ 0) hi)
       linear_combination -h₁ + r (2 * m * l) * h₀
 
-/-- The second half of the initial coefficient block vanishes. -/
-theorem coefficient_gap (u r : ℕ → R) {m : ℕ}
-    (hanti : Function.Antiperiodic u m)
-    (hmin : ∀ k, 0 < k → k < 2 * m → ¬(u k = u 0 ∧ u (k + 1) = u 1))
-    (hmaster : ∀ i k, r k * (u i + u (i + k)) =
-      2 * r (k + 1) * ∑ j ∈ Finset.range (k + 1), u (i + j))
-    (k : ℕ) (hmk : m < k) (hk : k < 2 * m) : r k = 0 := by
-  induction k using Nat.strong_induction_on with
-  | h k ih =>
-      obtain ⟨i, hi⟩ := exists_sum_ne_zero u (by omega : 0 < k) hk hmin
-      have h := hmaster i (k - 1)
-      rw [Nat.sub_add_cancel (by omega : 1 ≤ k)] at h
-      have hz : r (k - 1) * (u i + u (i + (k - 1))) = 0 := by
-        by_cases heq : k - 1 = m
-        · rw [heq, hanti, add_neg_cancel, mul_zero]
-        · rw [ih (k - 1) (by omega) (by omega) (by omega), zero_mul]
-      rw [hz] at h
-      apply (mul_eq_zero.mp (show r k * (2 * ∑ j ∈ Finset.range k, u (i + j)) = 0 by
-        linear_combination -h)).resolve_right
-      exact mul_ne_zero (by norm_num) hi
-
 theorem coefficients_ne_zero (u r : ℕ → R) {m : ℕ} (hu₀ : u 0 = 1) (hr₀ : r 0 = 1)
     (hmin : ∀ k, 0 < k → k < 2 * m → ¬(u k = u 0 ∧ u (k + 1) = u 1))
     (hmaster : ∀ i k, r k * (u i + u (i + k)) =
@@ -119,20 +98,20 @@ theorem block_factorization (P : R[X]) {p : ℕ} (hp : 0 < p)
 
 omit [CharZero R] in
 /-- Coprimality with reflection rules out a shorter coefficient block. -/
-theorem natDegree_le_half_period (P : R[X]) (hcop : IsCoprime P (P.comp (-X)))
+theorem natDegree_lt_period (P : R[X]) (hcop : IsCoprime P (P.comp (-X)))
     {m : ℕ} (hm : 0 < m)
-    (hblock : ∀ l k, k < 2 * m → P.coeff (2 * m * l + k) = P.coeff (2 * m * l) * P.coeff k)
-    (hgap : ∀ k, m < k → k < 2 * m → P.coeff k = 0) : P.natDegree ≤ m := by
+    (hblock : ∀ l k, k < 2 * m → P.coeff (2 * m * l + k) = P.coeff (2 * m * l) * P.coeff k) :
+    P.natDegree < 2 * m := by
   let Q : R[X] := ∑ k ∈ Finset.range (2 * m), C (P.coeff k) * X ^ k
   let E : R[X] := ∑ l ∈ Finset.range (P.natDegree + 1), C (P.coeff (2 * m * l)) * X ^ (2 * m * l)
   have hfactor : P = Q * E := block_factorization P (by omega) hblock
-  have hQ : Q.natDegree ≤ m := by
+  have hQ : Q.natDegree ≤ 2 * m - 1 := by
     apply natDegree_sum_le_of_forall_le
     intro k hk
-    by_cases hkm : k ≤ m
-    · exact (natDegree_C_mul_le _ _).trans (by simpa using hkm)
-    · simp only [hgap k (by omega) (Finset.mem_range.mp hk), map_zero,
-        zero_mul, natDegree_zero, Nat.zero_le]
+    apply (natDegree_C_mul_le _ _).trans
+    simp only [natDegree_X_pow]
+    have := Finset.mem_range.mp hk
+    omega
   have hE : E.comp (-X) = E := by
     simp only [E, sum_comp, mul_comp, C_comp, pow_comp, X_comp]
     apply Finset.sum_congr rfl
@@ -141,7 +120,9 @@ theorem natDegree_le_half_period (P : R[X]) (hcop : IsCoprime P (P.comp (-X)))
   have hunit : IsUnit E := hcop.isUnit_of_dvd' (by rw [hfactor]; exact dvd_mul_left _ _)
     (by rw [hfactor, mul_comp, hE]; exact dvd_mul_left _ _)
   rw [hfactor]
-  exact (natDegree_mul_le.trans (by rw [natDegree_eq_zero_of_isUnit hunit, add_zero])).trans hQ
+  have hle : (Q * E).natDegree ≤ 2 * m - 1 :=
+    (natDegree_mul_le.trans (by rw [natDegree_eq_zero_of_isUnit hunit, add_zero])).trans hQ
+  omega
 
 end
 end SecondOrder
