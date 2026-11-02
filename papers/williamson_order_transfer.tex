@@ -69,37 +69,38 @@ S_t(u_1\cdots u_m)=\int_{0<t_1<\cdots<t_m<t}\mathrm dx^{u_1}_{t_1}\cdots\mathrm 
 for the signature of $x$ paired with $u_1\otimes\cdots\otimes u_m$. Along the $l$th segment each $x^{u_r}$ grows linearly, by $\bbeta_lu_r$, and the iterated integral over that segment alone is $\frac1{m!}\prod_r\bbeta_lu_r$. Integrals over several segments are built from these by Chen's identity, which sorts the ordered times $t_1<\cdots<t_m$ into the segments they fall in.
 
 \begin{example}
-\label{ex:path-cfees25}
-For $\mathrm{CF\text{-}EES}(2,5)$, the coefficients \eqref{eq:cosine25-tables} give $\bbeta_1=(\frac12,0,0)$, $\bbeta_2=(-\frac12,1,0)$ and $\bbeta_3=(\frac14,-\frac12,\frac14)$. The tableau and coefficient path are
+\label{ex:path-williamson}
+Williamson's three-stage scheme of classical order three has coefficients $A_i=0,-\frac59,-\frac{153}{128}$ and $B_i=\frac13,\frac{15}{16},\frac8{15}$, so $\bbeta_1=(\frac13,0,0)$, $\bbeta_2=(-\frac{25}{48},\frac{15}{16},0)$ and $\bbeta_3=(\frac{17}{48},-\frac{51}{80},\frac8{15})$. The tableau and coefficient path are
 \begin{center}
-\begin{minipage}[c]{0.30\linewidth}
+\begin{minipage}[c]{0.34\linewidth}
 \[
+\renewcommand{\arraystretch}{1.2}
 \begin{array}{c|ccc}
 0&0&0&0\\
-\tfrac12&\tfrac12&0&0\\
-1&0&1&0\\\hline
-&\tfrac14&\tfrac12&\tfrac14
+\tfrac13&\tfrac13&0&0\\
+\tfrac34&-\tfrac3{16}&\tfrac{15}{16}&0\\\hline
+&\tfrac16&\tfrac3{10}&\tfrac8{15}
 \end{array}
 \]
 \end{minipage}\hfill
-\begin{minipage}[c]{0.68\linewidth}
+\begin{minipage}[c]{0.64\linewidth}
 \centering
-\begin{tikzpicture}[x={(4cm,0cm)},y={(0cm,2.8cm)},z={(-1.8cm,-1.6cm)},font=\small,>=stealth]
+\begin{tikzpicture}[x={(4cm,0cm)},y={(0cm,2.6cm)},z={(1.3cm,1.0cm)},font=\small,>=stealth]
 \coordinate (a1) at (0,0,0);
-\coordinate (a2) at (0.5,0,0);
-\coordinate (a3) at (0,1,0);
-\coordinate (b) at (0.25,0.5,0.25);
-\draw[->,gray!65] (a1)--(0.78,0,0) node[right] {$x_1$};
-\draw[->,gray!65] (a1)--(0,1.18,0) node[above] {$x_2$};
-\draw[->,gray!65] (a1)--(0,0,0.65) node[below left] {$x_3$};
+\coordinate (a2) at (1/3,0,0);
+\coordinate (a3) at (-3/16,15/16,0);
+\coordinate (b) at (1/6,3/10,8/15);
+\draw[->,gray!65] (-0.3,0,0)--(0.6,0,0) node[right] {$x_1$};
+\draw[->,gray!65] (a1)--(0,1.15,0) node[above] {$x_2$};
+\draw[->,gray!65] (a1)--(0,0,0.4) node[above left=-1pt] {$x_3$};
 \draw[->,thick,blue!65!black] (a1)--(a2);
 \draw[->,thick,blue!65!black] (a2)--(a3);
 \draw[->,thick,blue!65!black] (a3)--(b);
 \foreach \p in {a1,a2,a3,b} \fill[blue!65!black] (\p) circle (1.6pt);
-\node[above left] at (a1) {$\ba_1=0$};
-\node[below] at (a2) {$\ba_2=(\tfrac12,0,0)$};
-\node[above right] at (a3) {$\ba_3=(0,1,0)$};
-\node[left=5pt,fill=white,inner sep=1pt] at (b) {$\bb^\top=(\tfrac14,\tfrac12,\tfrac14)$};
+\node[below left] at (a1) {$\ba_1=0$};
+\node[below] at (a2) {$\ba_2=(\tfrac13,0,0)$};
+\node[left] at (a3) {$\ba_3=(-\tfrac3{16},\tfrac{15}{16},0)$};
+\node[right] at (b) {$\bb^\top=(\tfrac16,\tfrac3{10},\tfrac8{15})$};
 \end{tikzpicture}
 \end{minipage}
 \end{center}
@@ -124,9 +125,9 @@ The increment of $x^{\bg(\tau)}$ over the $l$th segment is $\bbeta_l\bg(\tau)=\m
 
 \input{signature_figure}
 
-The simplest cases show what the lemma produces. With a single tree the integral is just the total growth of the path, so $\bg(B_+(\tau))=\bA\bg(\tau)$; for $\tau=\TLeaf$ this gives the vector of nodes, $\bg(\TChainTwo)=\bc$. With the same tree repeated, the integral is a power divided by a factorial; for example, $\bg(\TTwoLeaves)=\frac12\bc\odot\bc$. The order of the exponentials matters only when different trees appear, since in general $S_l(\bc\,\one)\neq S_l(\one\,\bc)$. Lemma~\ref{lem:area} below is what controls these terms.
+The simplest cases show what the lemma produces. With a single tree the integral is just the total growth of the path, so $\bg(B_+(\tau))=\bA\bg(\tau)$; for $\tau=\TLeaf$ this gives the vector of nodes, $\bg(\TChainTwo)=\bc=\bA\one$. With the same tree repeated, the integral is a power divided by a factorial; for example, $\bg(\TTwoLeaves)=\frac12\bc\odot\bc$. The order of the exponentials matters only when different trees appear, since in general $S_l(\bc\,\one)\neq S_l(\one\,\bc)$. Lemma~\ref{lem:area} below is what controls these terms.
 
-\subsection{Area closure}
+\subsection{Areas are path coordinates}
 
 Let $\mathcal T$ be the set of (non-planar) rooted trees, with $\tau!=|\tau|\,\tau_1!\cdots\tau_k!$ for $\tau=B_+(\tau_1\cdots\tau_k)$ and $\TLeaf!=1$. The elementary weight vectors $\bPhi(\tau)\in\mathbb R^s$ are
 \[
@@ -134,54 +135,37 @@ Let $\mathcal T$ be the set of (non-planar) rooted trees, with $\tau!=|\tau|\,\t
 \]
 where $\odot$ is the componentwise product, and \eqref{eq:2n_rk} has classical order $p$ if and only if $\bb^\top\bPhi(\tau)=1/\tau!$ for all $\tau\in\mathcal T$ with $|\tau|\leq p$. For $u,v\in\mathbb R^s$ define
 \[
-u\triangleright v=(\bA u)\odot v,\qquad [u,v]=u\triangleright v-v\triangleright u.
+u\triangleright v=(\bA u)\odot v,\qquad D(u,v)=u\triangleright v-v\triangleright u.
 \]
 If $\sigma\curvearrowright\tau=B_+(\tau_1\cdots\tau_k\sigma)$ denotes grafting $\sigma$ onto the root of $\tau=B_+(\tau_1\cdots\tau_k)$, the definition of $\bPhi$ gives $\bPhi(\sigma)\triangleright\bPhi(\tau)=\bPhi(\sigma\curvearrowright\tau)$. Extending $\bPhi$ linearly,
 \begin{equation}
 \label{eq:grafting}
-[\bPhi(\sigma),\bPhi(\tau)]=\bPhi(\sigma\curvearrowright\tau-\tau\curvearrowright\sigma).
+D(\bPhi(\sigma),\bPhi(\tau))=\bPhi(\sigma\curvearrowright\tau-\tau\curvearrowright\sigma).
 \end{equation}
-For scalar paths $f,g$ with $f(0)=g(0)=0$, write $\Area(f,g)_t=\int_0^tf\,\mathrm dg-g\,\mathrm df$.
+For scalar paths $f,g$ with $f(0)=g(0)=0$, write $\Area(f,g)_t=\int_0^tf\,\mathrm dg-g\,\mathrm df$, twice the L\'evy area of the planar path $(f,g)$.
 
-\begin{lemma}[Area closure]
+\begin{lemma}[Areas are path coordinates]
 \label{lem:area}
-For all $u,v\in\mathbb R^s$, $\Area(x^u,x^v)=x^{[u,v]}$ on $[0,s]$.
+For all $u,v\in\mathbb R^s$, $\Area(x^u,x^v)=x^{D(u,v)}$ on $[0,s]$.
 \end{lemma}
 
 \begin{proof}
-For $1\leq i\leq s$ and a row $r$, consider the identity
-\[
-(\ast)_i\qquad r[u,v]=(\ba_iu)(rv)-(\ba_iv)(ru).
-\]
-Both sides are linear in $r$, and the row $\mathbf e_i^\top$ satisfies $(\ast)_i$ because $(\bA u)_i=\ba_iu$. We show by induction that $\bw_i$ satisfies $(\ast)_i$; for $i=1$ this holds since $\bw_1=\mathbf e_1^\top$. If $\bw_{i-1}$ satisfies $(\ast)_{i-1}$, then it also satisfies $(\ast)_i$: by \eqref{eq:tableau-rows}, $\ba_i-\ba_{i-1}=B_{i-1}\bw_{i-1}$, and the resulting extra term $B_{i-1}\bigl((\bw_{i-1}u)(\bw_{i-1}v)-(\bw_{i-1}v)(\bw_{i-1}u)\bigr)$ vanishes. Linearity and \eqref{eq:williamson-rows} then give $(\ast)_i$ for $\bw_i$, and hence for $\bbeta_i=B_i\bw_i$.
-
-On the $i$th segment, $x=\ba_i+\theta\bbeta_i$ with $\theta\in[0,1]$, so the terms in $\theta$ cancel in
+On the $i$th segment, $x=\ba_i+\theta\bbeta_i$ with $\theta\in[0,1]$, so the terms in $\theta$ cancel in the signed-area contribution
 \[
 x^u\,\mathrm dx^v-x^v\,\mathrm dx^u
-=\bigl((\ba_iu)(\bbeta_iv)-(\ba_iv)(\bbeta_iu)\bigr)\mathrm d\theta
-=\bbeta_i[u,v]\,\mathrm d\theta
-=\mathrm dx^{[u,v]}.
+=\bigl((\ba_iu)(\bbeta_iv)-(\ba_iv)(\bbeta_iu)\bigr)\mathrm d\theta.
 \]
-Both sides of the claimed identity vanish at $t=0$.
+Since $\mathrm dx^{D(u,v)}=\bbeta_i D(u,v)\,\mathrm d\theta$ and both sides of the lemma vanish at $t=0$, it suffices to prove
+\begin{equation}
+\label{eq:segment-area}
+r\,D(u,v)=(\ba_iu)(rv)-(\ba_iv)(ru)
+\end{equation}
+for $r=\bbeta_i$, or equivalently for $r=\bw_i$. Both sides are linear in $r$, and $r=\mathbf e_i^\top$ satisfies \eqref{eq:segment-area} because $(\bA u)_i=\ba_iu$; this settles $i=1$. For $i\geq2$, assume \eqref{eq:segment-area} for $r=\bw_{i-1}$ with $\ba_{i-1}$ in place of $\ba_i$. Replacing $\ba_{i-1}$ by $\ba_i=\ba_{i-1}+B_{i-1}\bw_{i-1}$ adds $B_{i-1}\bigl((\bw_{i-1}u)(\bw_{i-1}v)-(\bw_{i-1}v)(\bw_{i-1}u)\bigr)=0$, so $r=\bw_{i-1}$ also satisfies \eqref{eq:segment-area}. Linearity and \eqref{eq:williamson-rows} give it for $\bw_i=A_i\bw_{i-1}+\mathbf e_i^\top$.
 \end{proof}
 
 By \eqref{eq:grafting}, Lemma~\ref{lem:area} says that the area of two tree projections of $x$ is the projection of the commutator of grafting. Because the identity holds on all of $[0,s]$, it can be iterated.
 
-\begin{example}
-\label{ex:projections-cfees25}
-In Example~\ref{ex:path-cfees25}, write $x=(x_1,x_2,x_3)$ and $\bc=\bA\one$. The projections onto the elementary weight vectors of trees with at most three vertices are
-\[
-\renewcommand{\arraystretch}{1.2}
-\begin{array}{c|c|c|cccc}
-\tau&\bPhi(\tau)&x^{\bPhi(\tau)}&x(0)&x(1)&x(2)&x(3)\\\hline
-\TLeaf&\one&x_1+x_2+x_3&0&\tfrac12&1&1\\
-\TChainTwo&\bc&\tfrac12x_2+x_3&0&0&\tfrac12&\tfrac12\\
-\TChainThree&\bA\bc&\tfrac12x_3&0&0&0&\tfrac18\\
-\TTwoLeaves&\bc\odot\bc&\tfrac14x_2+x_3&0&0&\tfrac14&\tfrac38
-\end{array}
-\]
-The last column lists the elementary weights $\bb^\top\bPhi(\tau)$: classical order two holds and order three fails. Since $[\bc,\one]=\bA\bc-\bc\odot\bc=(0,-\frac14,-\frac12)^\top$, the area $\Area(x^{\bc},x^{\one})=x^{[\bc,\one]}$ has vertex values $0,0,-\frac14,-\frac14$.
-\end{example}
+\input{area_figure}
 
 \subsection{Reduction to elementary weights}
 
@@ -218,7 +202,7 @@ The proof uses only Theorem~\ref{thm:generation}, Lemma~\ref{lem:area} and the d
 \[
 \bPhi(\tau)(\rho)=\frac{|\tau|\,\rho^{|\tau|-1}}{\tau!},\qquad x(t)\bPhi(\tau)=\frac{t^{|\tau|}}{\tau!},
 \]
-by induction on $\tau$. Area closure holds because both sides of Lemma~\ref{lem:area} have derivative $(\bA u)v-(\bA v)u$. Write $Q[\mathrm{ex}_t]$ for the value of $Q$ at $M_\sigma=x(t)\bPhi(\sigma)=t^{|\sigma|}/\sigma!$. The proof of Proposition~\ref{prop:weights} then gives, with the same polynomials and for linear combinations $\eta_j$ of trees,
+by induction on $\tau$. Lemma~\ref{lem:area} holds here because both sides have derivative $(\bA u)v-(\bA v)u$. Write $Q[\mathrm{ex}_t]$ for the value of $Q$ at $M_\sigma=x(t)\bPhi(\sigma)=t^{|\sigma|}/\sigma!$. The proof of Proposition~\ref{prop:weights} then gives, with the same polynomials and for linear combinations $\eta_j$ of trees,
 \begin{equation}
 \label{eq:exact-weights}
 Q_{\eta_1\cdots\eta_m}[\mathrm{ex}_t]=\int_{0<t_1<\cdots<t_m<t}\bPhi(\eta_1)(t_1)\cdots\bPhi(\eta_m)(t_m)\,\mathrm dt_1\cdots\mathrm dt_m.
@@ -265,9 +249,9 @@ In particular, Theorem~\ref{thm:cosine-ees-order} and Theorem~\ref{thm:transfer}
 
 \begin{example}
 \label{ex:transfer-cfees25}
-We return to Example~\ref{ex:path-cfees25}. Of the coefficients below, only $\phi(\TChainTwo\,\TLeaf)=S_3(\bc\,\one)$ depends on the order of the exponentials. By the shuffle identity and Lemma~\ref{lem:area},
+For $\mathrm{CF\text{-}EES}(2,5)$, the coefficients \eqref{eq:cosine25-tables} give $\bbeta_1=(\frac12,0,0)$, $\bbeta_2=(-\frac12,1,0)$, $\bbeta_3=(\frac14,-\frac12,\frac14)$ and $\bc=(0,\frac12,1)$. Of the coefficients below, only $\phi(\TChainTwo\,\TLeaf)=S_3(\bc\,\one)$ depends on the order of the exponentials. By the shuffle identity and Lemma~\ref{lem:area},
 \[
-2S_3(\bc\,\one)=(\bb^\top\bc)(\bb^\top\one)+\bb^\top[\bc,\one].
+2S_3(\bc\,\one)=(\bb^\top\bc)(\bb^\top\one)+\bb^\top D(\bc,\one).
 \]
 The polynomials $Q_{B_+(\omega)}$ and their values for $|\omega|\leq3$ are
 \[

@@ -1,0 +1,23 @@
+% Example: Lemma 1.4 on Williamson's scheme. Input from the main section after Lemma 1.4.
+\begin{example}
+\label{ex:area-williamson}
+In Example~\ref{ex:path-williamson}, $D(\one,\bc)=\bc\odot\bc-\bA\bc=(0,\frac19,\frac14)^\top$. By Lemma~\ref{lem:area}, the accumulated area $\Area(x^{\one},x^{\bc})$ equals the path coordinate $x^{D(\one,\bc)}$ at every time:
+\definecolor{siggreen}{RGB}{90,170,110}%
+\begin{center}
+\begin{tikzpicture}[x=1.6cm,y=15cm,font=\small,>=stealth]
+\draw[->,gray] (0,0)--(3.35,0) node[right]{$t$};
+\draw[->,gray] (0,0)--(0,0.2);
+\foreach \t in {1,2,3} {\draw[gray] (\t,0)--(\t,-0.006) node[below]{$\t$};}
+\draw[gray,dashed] (0,1/6) node[left,black]{$\tfrac16$}--(3,1/6);
+\draw[gray,dashed] (0,5/48) node[left,black]{$\tfrac5{48}$}--(2,5/48);
+\draw[line width=4pt,siggreen,opacity=0.6] (0,0)--(1,0)--(2,5/48)--(3,1/6);
+\draw[thick,blue!50!black,dashed] (0,0)--(1,0)--(2,5/48)--(3,1/6);
+\foreach \p in {(0,0),(1,0),(2,5/48),(3,1/6)} \fill[blue!50!black] \p circle (1.3pt);
+\node[siggreen!70!black,right] at (0.1,0.08) {$\Area(x^{\one},x^{\bc})$};
+\node[blue!50!black,right] at (0.1,0.055) {$x^{D(\one,\bc)}$};
+\node[right,font=\footnotesize] at (2.05,5/48-0.012) {$\ba_3D(\one,\bc)=\tfrac{15}{16}\cdot\tfrac19=\tfrac5{48}$};
+\node[right,font=\footnotesize] at (3.05,1/6) {$\bb^\top D(\one,\bc)=\tfrac3{10}\cdot\tfrac19+\tfrac8{15}\cdot\tfrac14=\tfrac16$};
+\end{tikzpicture}
+\end{center}
+At $t=3$ both equal $\bb^\top(\bc\odot\bc)-\bb^\top\bA\bc=\frac13-\frac16$, a combination of classical elementary weights.
+\end{example}
