@@ -30,7 +30,7 @@ lake exe cache get
 lake build
 ```
 
-The Williamson proof uses `RoughPaths.AreaReduction.diff_primitive`; its
+The Williamson proof uses `HopfAlgebras.Word.AreaReduction.diff_primitive`; its
 rooted-tree grading and method-specific path identities remain in this repository.
 Moment polynomials use Mathlib `Finsupp` and `LinearMap`. The coefficient path
 is defined directly from the finite tableau rows in `AreaTableau.lean`.

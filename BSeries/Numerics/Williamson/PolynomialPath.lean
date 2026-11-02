@@ -38,7 +38,7 @@ theorem Poly.derivative_eval (X : PTree → ℝ[X]) (p : Poly) :
   have h : (derivative.restrictScalars ℚ).comp (eval X) =
       diff X (fun t => derivative (X t)) := by
     apply linearMap_ext; intro ts
-    simpa [eval, diff, RoughPaths.AreaReduction.Poly.diff] using derivative_monomial X ts
+    simpa [eval, diff, HopfAlgebras.Word.AreaReduction.Poly.diff] using derivative_monomial X ts
   exact LinearMap.congr_fun h p
 
 variable {s : ℕ}
@@ -99,7 +99,7 @@ theorem momentPath_area (ls : LowStorage s ℝ) (e : ℕ) (u v : PTree) :
 
 theorem eval_momentPrefix_node (ls : LowStorage s ℝ) (i : Fin s) (ts : List PTree) :
     (Poly.monomial ts).eval (momentPrefix ls i) = stageWeight ls.toRK (.node ts) i := by
-  simp only [Poly.monomial, RoughPaths.AreaReduction.Poly.eval_monomial, stageWeight_node]
+  simp only [Poly.monomial, HopfAlgebras.Word.AreaReduction.Poly.eval_monomial, stageWeight_node]
   induction ts with
   | nil => rfl
   | cons t ts ih =>

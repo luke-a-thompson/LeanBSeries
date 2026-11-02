@@ -1,5 +1,5 @@
 import BSeries.Numerics.Williamson.AreaTableau
-import RoughPaths.Signature.AreaReduction
+import HopfAlgebras.Words.AreaReduction
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Algebra.Algebra.Bilinear
 
@@ -20,15 +20,15 @@ open HopfAlgebras.Word.Polynomial
 
 noncomputable section
 
-abbrev Poly := RoughPaths.AreaReduction.Poly PTree
+abbrev Poly := HopfAlgebras.Word.AreaReduction.Poly PTree
 
 namespace Poly
 
-abbrev monomial (ts : List PTree) : Poly := RoughPaths.AreaReduction.Poly.monomial ts
+abbrev monomial (ts : List PTree) : Poly := HopfAlgebras.Word.AreaReduction.Poly.monomial ts
 abbrev eval {R : Type*} [CommRing R] [Algebra ℚ R] (X : PTree → R) : Poly →ₗ[ℚ] R :=
-  RoughPaths.AreaReduction.Poly.eval X
+  HopfAlgebras.Word.AreaReduction.Poly.eval X
 abbrev diff {R : Type*} [CommRing R] [Algebra ℚ R] (X V : PTree → R) : Poly →ₗ[ℚ] R :=
-  RoughPaths.AreaReduction.Poly.diff X V
+  HopfAlgebras.Word.AreaReduction.Poly.diff X V
 
 /-- A homogeneous expression of classical moment weight `n`. -/
 inductive Homogeneous : Poly → ℕ → Prop
@@ -46,12 +46,12 @@ theorem homogeneous_sum (ps : List Poly) (n : ℕ)
 
 end Poly
 
-export RoughPaths.AreaReduction (selections selections_perm dmonomial)
+export HopfAlgebras.Word.AreaReduction (dmonomial)
 
 theorem selections_order {as : List PTree} {p : PTree × List PTree}
-    (h : p ∈ selections as) : PTree.order p.1 + PTree.orderList p.2 =
+    (h : p ∈ List.selections as) : PTree.order p.1 + PTree.orderList p.2 =
       PTree.orderList as := by
-  exact PTree.orderList_perm (selections_perm h)
+  exact PTree.orderList_perm (List.selections_perm h)
 
 /-- Attach `u` as a new child at the root of `v`. -/
 def graft (u v : PTree) : PTree := .node (u :: v.children)
@@ -63,7 +63,7 @@ theorem order_graft (u v : PTree) : PTree.order (graft u v) =
   omega
 
 abbrev primitive (n : ℕ) (ts : List PTree) (v : PTree) : Poly :=
-  RoughPaths.AreaReduction.primitive graft n ts v
+  HopfAlgebras.Word.AreaReduction.primitive graft n ts v
 
 theorem homogeneous_primitive (n : ℕ) (ts : List PTree) (v : PTree) :
     Poly.Homogeneous (primitive n ts v) (PTree.orderList ts + PTree.order v) := by
@@ -110,7 +110,7 @@ theorem diff_integrate {R : Type*} [CommRing R] [Algebra ℚ R]
     apply linearMap_ext; intro ts
     apply linearMap_ext; intro us
     simpa [integrate, rootEval, eval] using
-      RoughPaths.AreaReduction.diff_primitive graft X V harea _ ts (.node us) (Nat.lt_succ_self _)
+      HopfAlgebras.Word.AreaReduction.diff_primitive graft X V harea _ ts (.node us) (Nat.lt_succ_self _)
   exact LinearMap.congr_fun (LinearMap.congr_fun h p) q
 
 theorem Homogeneous.integrate {p q : Poly} {m n : ℕ}
