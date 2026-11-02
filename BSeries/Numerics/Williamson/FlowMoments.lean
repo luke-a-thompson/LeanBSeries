@@ -18,11 +18,13 @@ def polyFlow (ls : LowStorage s ℝ) (e : ℕ) (ts : List PTree) : ℝ :=
 theorem polyFlow_zero (ls : LowStorage s ℝ) (ts : List PTree) :
     polyFlow ls 0 ts = if ts = [] then 1 else 0 := by
   by_cases h : ts = []
-  · subst ts; rfl
+  · subst ts; simp [polyFlow, Poly.eval]
   · rw [ite_eq_right h]
     have hn : 0 < PTree.orderList ts := by
       have := (PTree.orderList_eq_zero_iff ts).not.mpr h
       omega
+    change (orderedForest ts).eval (fun t => ls.pathPrefix (stageWeight ls.toRK t) 0) = 0
+    simp only [prefix_zero]
     exact (homogeneous_orderedForest ts).eval_zero hn
 
 /-- Moment-polynomial coefficients satisfy the chronological exponential recursion. -/
@@ -107,10 +109,8 @@ theorem flowChar_eq_polyFlow (ls : LowStorage s ℝ) (e : ℕ)
 theorem methodChar_eq_momentPolynomial (ls : LowStorage s ℝ) (ts : List PTree) :
     ls.methodChar ts = (orderedForest ts).eval (weight ls.toRK) := by
   rw [methodChar, flowChar_eq_polyFlow ls s ts le_rfl]
-  unfold polyFlow
-  congr 1
-  funext t
-  exact momentPrefix_eq_weight ls t
+  have h : momentPrefix ls s = weight ls.toRK := funext (momentPrefix_eq_weight ls)
+  simp only [polyFlow, h]
 
 end
 end BSeries.WilliamsonMoments

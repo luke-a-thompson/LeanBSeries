@@ -32,4 +32,6 @@ lake build
 
 The Williamson proof uses `RoughPaths.AreaReduction.diff_primitive`; its
 rooted-tree grading and method-specific path identities remain in this repository.
+Moment polynomials use Mathlib `Finsupp` and `LinearMap`. The coefficient path
+is defined directly from the finite tableau rows in `AreaTableau.lean`.
 The general word theorem is `HopfAlgebras.Word.Polynomial.word_generated` in the fork.

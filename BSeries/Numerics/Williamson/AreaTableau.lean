@@ -1,21 +1,59 @@
 import BSeries.Numerics.Williamson.Basic
-import BSeries.Numerics.Williamson.Area
+import Mathlib.Tactic.Ring
 
-/-! # The area-closed path of the existing Williamson tableau -/
+/-! # Area closure of the finite Williamson coefficient path
+
+The path uses the rows of `beta` directly. Its prefixes are the rows of
+`toRK.A`, and its endpoint is `toRK.b`. No coefficient is divided out.
+-/
 
 namespace BSeries.RungeKutta.LowStorage
 
 open scoped BigOperators
-open WilliamsonPath
-
 variable {R : Type*} [CommRing R] {s : ℕ}
 
-/-- Extend a finite column by zero. -/
-def extend (u : Fin s → R) (n : ℕ) : R :=
-  if h : n < s then u ⟨n, h⟩ else 0
+/-- A scalar projection of the coefficient path at a stage boundary. -/
+def pathPrefix (ls : LowStorage s R) (u : Fin s → R) (n : ℕ) : R :=
+  ∑ i, if i.val < n then ∑ j, ls.beta i j * u j else 0
 
-@[simp] theorem extend_coe (u : Fin s → R) (i : Fin s) : extend u i = u i := by
-  simp [extend, i.isLt]
+/-- A scalar projection of one segment increment. -/
+def slope (ls : LowStorage s R) (u : Fin s → R) (n : ℕ) : R :=
+  if h : n < s then ∑ j, ls.beta ⟨n, h⟩ j * u j else 0
+
+@[simp] theorem prefix_zero (ls : LowStorage s R) (u : Fin s → R) :
+    ls.pathPrefix u 0 = 0 := by simp [pathPrefix]
+
+@[simp] theorem slope_coe (ls : LowStorage s R) (u : Fin s → R) (i : Fin s) :
+    ls.slope u i = ∑ j, ls.beta i j * u j := by simp [slope, i.isLt]
+
+theorem prefix_succ (ls : LowStorage s R) (u : Fin s → R) (n : ℕ) :
+    ls.pathPrefix u (n + 1) = ls.pathPrefix u n + ls.slope u n := by
+  classical
+  by_cases hn : n < s
+  · have hsplit : ∀ i : Fin s,
+        (if i.val < n + 1 then ∑ j, ls.beta i j * u j else 0) =
+        (if i.val < n then ∑ j, ls.beta i j * u j else 0) +
+          (if i = ⟨n, hn⟩ then ∑ j, ls.beta i j * u j else 0) := by
+      intro i
+      simp only [Fin.ext_iff]
+      split_ifs <;> simp_all <;> omega
+    simp only [pathPrefix, hsplit, Finset.sum_add_distrib, slope, dite_eq_left hn]
+    simp
+  · have hi (i : Fin s) : i.val < n := lt_of_lt_of_le i.isLt (by omega)
+    simp [pathPrefix, slope, hn, hi, fun i => Nat.lt_succ_of_lt (hi i)]
+
+theorem prefix_eq_A (ls : LowStorage s R) (u : Fin s → R) (i : Fin s) :
+    ls.pathPrefix u i = ∑ j, ls.toRK.A i j * u j := by
+  simp_rw [pathPrefix, toRK_A, Finset.sum_mul]
+  rw [Finset.sum_comm, ← Finset.sum_filter]
+  congr 1
+  ext k
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_Iio, Fin.lt_def]
+
+theorem prefix_eq_b (ls : LowStorage s R) (u : Fin s → R) :
+    ls.pathPrefix u s = ∑ j, ls.toRK.b j * u j := by
+  simp only [pathPrefix, Fin.isLt, ite_true, toRK_b, Finset.sum_mul]
+  rw [Finset.sum_comm]
 
 /-- Coefficients of the increment register, before scaling by `B`. -/
 def registerCoeff (ls : LowStorage s R) (i j : Fin s) : R :=
@@ -31,135 +69,100 @@ private theorem registerCoeff_zero (ls : LowStorage s R) (hs : 0 < s)
     ls.registerCoeff ⟨0, hs⟩ j = if j = ⟨0, hs⟩ then 1 else 0 := by
   by_cases hj : j = ⟨0, hs⟩
   · subst j; simp [registerCoeff]
-  · have hj' : ¬ j ≤ (⟨0, hs⟩ : Fin s) := by
-      intro h; apply hj; apply Fin.ext; change j.val ≤ 0 at h; change j.val = 0; omega
-    simp [registerCoeff, hj, hj']
+  · have : ¬ j ≤ (⟨0, hs⟩ : Fin s) := fun h => hj (Fin.ext (Nat.eq_zero_of_le_zero h))
+    simp [registerCoeff, hj, this]
 
 private theorem registerCoeff_succ (ls : LowStorage s R) (n : ℕ)
     (hn : n + 1 < s) (j : Fin s) :
     ls.registerCoeff ⟨n + 1, hn⟩ j =
       ls.A ⟨n + 1, hn⟩ * ls.registerCoeff ⟨n, by omega⟩ j +
         if j = ⟨n + 1, hn⟩ then 1 else 0 := by
-  by_cases hj : j.val ≤ n
-  · have h₁ : j ≤ (⟨n, by omega⟩ : Fin s) := hj
-    have h₂ : j ≤ (⟨n + 1, hn⟩ : Fin s) := by exact Nat.le_succ_of_le hj
-    have h₃ : j ≠ (⟨n + 1, hn⟩ : Fin s) := by
-      intro h; have := congrArg Fin.val h; dsimp at this; omega
-    simp only [registerCoeff, ite_eq_left h₁, ite_eq_left h₂, ite_eq_right h₃, add_zero]
+  rcases lt_trichotomy j.val (n + 1) with hj | hj | hj
+  · simp only [registerCoeff, Fin.le_def, Fin.ext_iff]
+    rw [ite_eq_left hj.le, ite_eq_left (show j.val ≤ n by omega),
+      ite_eq_right (Nat.ne_of_lt hj), add_zero]
     unfold prodA
-    rw [Finset.prod_Ico_succ_top (by omega), dite_eq_left hn]
-    ring
-  · by_cases heq : j = ⟨n + 1, hn⟩
-    · subst j
-      simp [registerCoeff, show ¬ (n + 1 ≤ n) by omega]
-    · have h₁ : ¬ j ≤ (⟨n, by omega⟩ : Fin s) := hj
-      have h₂ : ¬ j ≤ (⟨n + 1, hn⟩ : Fin s) := by
-        intro h
-        apply heq
-        apply Fin.ext
-        change j.val ≤ n + 1 at h
-        dsimp
-        omega
-      simp [registerCoeff, h₁, h₂, heq]
+    rw [Finset.prod_Ico_succ_top (by omega), dite_eq_left hn, mul_comm]
+  · have : j = ⟨n + 1, hn⟩ := Fin.ext hj
+    subst j
+    simp [registerCoeff, show ¬ (n + 1 ≤ n) by omega]
+  · simp [registerCoeff, Fin.le_def, Fin.ext_iff, Nat.ne_of_gt hj,
+      show ¬ j.val ≤ n + 1 from not_le.mpr hj, show ¬ j.val ≤ n by omega]
 
-/-- The recurrence register agrees with the unrolled tableau coefficients. -/
-theorem register_eq_sum (ls : LowStorage s R) (u : Fin s → R)
-    (n : ℕ) (hn : n < s) :
-    register (extend ls.A) (extend u) (n + 1) =
-      ∑ j, ls.registerCoeff ⟨n, hn⟩ j * u j := by
+/-- The increment register as a finite linear combination of columns. -/
+def register (ls : LowStorage s R) (u : Fin s → R) (i : Fin s) : R :=
+  ∑ j, ls.registerCoeff i j * u j
+
+private theorem register_zero (ls : LowStorage s R) (u : Fin s → R) (hs : 0 < s) :
+    ls.register u ⟨0, hs⟩ = u ⟨0, hs⟩ := by
   classical
-  induction n with
-  | zero =>
-      simp [register, extend, hn, registerCoeff_zero]
-  | succ n ih =>
-      rw [register, ih (by omega)]
-      simp only [extend, dite_eq_left hn]
-      simp_rw [registerCoeff_succ ls n hn, add_mul]
-      rw [Finset.sum_add_distrib, Finset.mul_sum]
-      simp [mul_assoc]
+  simp [register, registerCoeff_zero]
 
-/-- A scalar increment of the coefficient path is the corresponding `beta` row. -/
-theorem increment_eq_sum_beta (ls : LowStorage s R) (u : Fin s → R)
-    (i : Fin s) :
-    extend ls.B i * register (extend ls.A) (extend u) (i.val + 1) =
-      ∑ j, ls.beta i j * u j := by
-  rw [extend_coe, register_eq_sum ls u i i.isLt, Finset.mul_sum]
-  simp_rw [beta_eq_mul_registerCoeff, mul_assoc]
-
-/-- The recurrence prefix is the sum of the unrolled exponential increments. -/
-theorem endpoint_eq_sum (ls : LowStorage s R) (u : Fin s → R)
-    (n : ℕ) (hn : n ≤ s) :
-    endpoint (extend ls.A) (extend ls.B) (extend u) n =
-      ∑ i : Fin s, if i.val < n then ∑ j, ls.beta i j * u j else 0 := by
+private theorem register_succ (ls : LowStorage s R) (u : Fin s → R)
+    (n : ℕ) (hn : n + 1 < s) :
+    ls.register u ⟨n + 1, hn⟩ =
+      ls.A ⟨n + 1, hn⟩ * ls.register u ⟨n, by omega⟩ + u ⟨n + 1, hn⟩ := by
   classical
-  induction n with
-  | zero => simp [endpoint]
-  | succ n ih =>
-      have hn' : n < s := by omega
-      rw [endpoint, ih (by omega), increment_eq_sum_beta ls u ⟨n, hn'⟩]
-      have hsplit : ∀ i : Fin s,
-          (if i.val < n + 1 then ∑ j, ls.beta i j * u j else 0) =
-          (if i.val < n then ∑ j, ls.beta i j * u j else 0) +
-            (if i = ⟨n, hn'⟩ then ∑ j, ls.beta i j * u j else 0) := by
-        intro i
-        by_cases hi : i.val < n
-        · have hne : i ≠ (⟨n, hn'⟩ : Fin s) := by
-            intro h; have := congrArg Fin.val h; dsimp at this; omega
-          simp [hi, hne, show i.val < n + 1 by omega]
-        · by_cases heq : i = ⟨n, hn'⟩
-          · subst i; simp
-          · have hgt : ¬ i.val < n + 1 := by
-              intro h; apply heq; apply Fin.ext; dsimp; omega
-            simp [hi, heq, hgt]
-      rw [Finset.sum_congr rfl (fun i _ => hsplit i), Finset.sum_add_distrib]
-      simp
+  simp [register, registerCoeff_succ, add_mul, Finset.sum_add_distrib,
+    Finset.mul_sum, mul_assoc]
 
-/-- Prefixes of the coefficient path are exactly the rows of `toRK`. -/
-theorem endpoint_eq_toRK_A (ls : LowStorage s R) (u : Fin s → R) (i : Fin s) :
-    endpoint (extend ls.A) (extend ls.B) (extend u) i =
-      ∑ j, ls.toRK.A i j * u j := by
-  rw [endpoint_eq_sum ls u i i.isLt.le]
-  simp_rw [toRK_A, Finset.sum_mul]
-  rw [Finset.sum_comm]
-  rw [← Finset.sum_filter]
-  congr 1
-  ext k
-  simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_Iio, Fin.lt_def]
+theorem slope_eq_register (ls : LowStorage s R) (u : Fin s → R) (i : Fin s) :
+    ls.slope u i = ls.B i * ls.register u i := by
+  simp [register, beta_eq_mul_registerCoeff, Finset.mul_sum, mul_assoc]
 
-/-- The final endpoint is the output row `b` of `toRK`. -/
-theorem endpoint_eq_toRK_b (ls : LowStorage s R) (u : Fin s → R) :
-    endpoint (extend ls.A) (extend ls.B) (extend u) s =
-      ∑ j, ls.toRK.b j * u j := by
-  rw [endpoint_eq_sum ls u s le_rfl]
-  simp only [Fin.isLt, ite_true]
-  simp_rw [toRK_b, Finset.sum_mul]
-  rw [Finset.sum_comm]
-
-/-- The alternating column `D_A(u,v)` for the induced tableau. -/
+/-- The alternating column from equation (7) of the order-transfer proof. -/
 def areaColumn (ls : LowStorage s R) (u v : Fin s → R) (i : Fin s) : R :=
-  (∑ j, ls.toRK.A i j * u j) * v i -
-    (∑ j, ls.toRK.A i j * v j) * u i
+  ls.pathPrefix u i * v i - ls.pathPrefix v i * u i
 
-theorem extend_areaColumn (ls : LowStorage s R) (u v : Fin s → R) :
-    extend (ls.areaColumn u v) =
-      bracket (extend ls.A) (extend ls.B) (extend u) (extend v) := by
-  funext n
+private theorem register_area (ls : LowStorage s R) (u v : Fin s → R)
+    (n : ℕ) (hn : n < s) :
+    ls.register (ls.areaColumn u v) ⟨n, hn⟩ =
+      ls.pathPrefix u n * ls.register v ⟨n, hn⟩ -
+        ls.pathPrefix v n * ls.register u ⟨n, hn⟩ := by
+  induction n with
+  | zero => simp [register_zero, areaColumn]
+  | succ n ih =>
+      rw [register_succ, ih (by omega), register_succ, register_succ]
+      simp only [areaColumn, prefix_succ]
+      rw [slope_eq_register ls u ⟨n, by omega⟩, slope_eq_register ls v ⟨n, by omega⟩]
+      ring
+
+/-- The signed area integrand is itself a coefficient-path increment. -/
+theorem slope_area (ls : LowStorage s R) (u v : Fin s → R) (n : ℕ) :
+    ls.slope (ls.areaColumn u v) n =
+      ls.pathPrefix u n * ls.slope v n - ls.pathPrefix v n * ls.slope u n := by
   by_cases hn : n < s
-  · change extend (ls.areaColumn u v) (⟨n, hn⟩ : Fin s) = _
-    rw [extend_coe]
-    simp only [bracket, areaColumn,
-      endpoint_eq_toRK_A ls u ⟨n, hn⟩, endpoint_eq_toRK_A ls v ⟨n, hn⟩]
-    simp [extend, hn]
-  · simp [extend, bracket, hn]
+  · rw [slope_eq_register ls _ ⟨n, hn⟩, register_area,
+      slope_eq_register ls v ⟨n, hn⟩, slope_eq_register ls u ⟨n, hn⟩]
+    ring
+  · simp [slope, hn]
 
-/-- **Lemma 1 for `LowStorage.toRK`**: the area of any two scalar
-projections of the coefficient path is the projection along `D_A(u,v)`.
-The equality holds for every segment parameter, not just at the endpoint. -/
+/-- The coefficient path on a straight segment. -/
+def coefficientPath (ls : LowStorage s R) (u : Fin s → R) (n : ℕ) (θ : R) : R :=
+  ls.pathPrefix u n + θ * ls.slope u n
+
+/-- The area integrand is constant along each straight segment. -/
+theorem coefficientPath_area_integrand (ls : LowStorage s R) (u v : Fin s → R)
+    (n : ℕ) (θ : R) :
+    ls.coefficientPath u n θ * ls.slope v n -
+      ls.coefficientPath v n θ * ls.slope u n = ls.slope (ls.areaColumn u v) n := by
+  rw [slope_area]
+  unfold coefficientPath
+  ring
+
+/-- Accumulated signed area, including the current straight segment. -/
+def coefficientArea (ls : LowStorage s R) (u v : Fin s → R) (n : ℕ) (θ : R) : R :=
+  (∑ i : Fin s, if i.val < n then
+    ls.pathPrefix u i * ls.slope v i - ls.pathPrefix v i * ls.slope u i else 0) +
+    θ * (ls.pathPrefix u n * ls.slope v n - ls.pathPrefix v n * ls.slope u n)
+
+/-- Area closure holds at every point, including when coefficients vanish. -/
 theorem coefficientPath_area (ls : LowStorage s R) (u v : Fin s → R)
     (n : ℕ) (θ : R) :
-    segmentArea (extend ls.A) (extend ls.B) (extend u) (extend v) n θ =
-      segment (extend ls.A) (extend ls.B) (extend (ls.areaColumn u v)) n θ := by
-  rw [extend_areaColumn, area_eq]
+    ls.coefficientArea u v n θ = ls.coefficientPath (ls.areaColumn u v) n θ := by
+  unfold coefficientArea coefficientPath
+  simp_rw [← slope_area]
+  simp only [slope_coe, pathPrefix]
 
 open HopfAlgebras in
 /-- The grafting identity (equation (7)): areas of elementary columns
@@ -170,6 +173,6 @@ theorem areaColumn_stageWeight (ls : LowStorage s R)
       fun i => stageWeight ls.toRK (.node (.node σ :: τ)) i -
         stageWeight ls.toRK (.node (.node τ :: σ)) i := by
   funext i
-  simp only [areaColumn, stageWeight_node, stageWeightList_cons]
+  simp only [areaColumn, prefix_eq_A, stageWeight_node, stageWeightList_cons]
 
 end BSeries.RungeKutta.LowStorage

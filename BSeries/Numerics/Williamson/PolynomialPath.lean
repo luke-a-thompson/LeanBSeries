@@ -6,27 +6,26 @@ import Mathlib.Algebra.Polynomial.Derivative
 namespace BSeries.WilliamsonMoments
 
 open HopfAlgebras Polynomial
-open RungeKutta RungeKutta.LowStorage RungeKutta.WilliamsonPath
+open HopfAlgebras.Word.Polynomial
+open RungeKutta RungeKutta.LowStorage
 
 noncomputable section
 
 theorem Poly.map_eval {R S : Type*} [CommRing R] [CommRing S]
     [Algebra ℚ R] [Algebra ℚ S] (f : R →ₐ[ℚ] S) (X : PTree → R) (p : Poly) :
     f (p.eval X) = p.eval (fun t => f (X t)) := by
-  induction p with
-  | zero => simp [Poly.eval]
-  | monomial ts => simp [Poly.eval, map_list_prod, List.map_map, Function.comp_def]
-  | add p q hp hq => simp [Poly.eval, hp, hq]
-  | scale c p hp => simp [Poly.eval, hp]
+  have h : f.toLinearMap.comp (eval X) = eval (fun t => f (X t)) := by
+    apply linearMap_ext; intro ts
+    simp [eval, map_list_prod, List.map_map, Function.comp_def]
+  exact LinearMap.congr_fun h p
 
 theorem Poly.map_rootEval {R S : Type*} [CommRing R] [CommRing S]
     [Algebra ℚ R] [Algebra ℚ S] (f : R →ₐ[ℚ] S) (V : PTree → R) (p : Poly) :
     f (p.rootEval V) = p.rootEval (fun t => f (V t)) := by
-  induction p with
-  | zero => simp [Poly.rootEval]
-  | monomial ts => rfl
-  | add p q hp hq => simp [Poly.rootEval, hp, hq]
-  | scale c p hp => simp [Poly.rootEval, hp]
+  have h : f.toLinearMap.comp (rootEval V) = rootEval (fun t => f (V t)) := by
+    apply linearMap_ext; intro ts
+    simp [rootEval]
+  exact LinearMap.congr_fun h p
 
 theorem derivative_monomial (X : PTree → ℝ[X]) (ts : List PTree) :
     derivative (ts.map X).prod = dmonomial X (fun t => derivative (X t)) ts := by
@@ -36,21 +35,19 @@ theorem derivative_monomial (X : PTree → ℝ[X]) (ts : List PTree) :
 
 theorem Poly.derivative_eval (X : PTree → ℝ[X]) (p : Poly) :
     derivative (p.eval X) = p.diff X (fun t => derivative (X t)) := by
-  induction p with
-  | zero => simp [Poly.eval, Poly.diff]
-  | monomial ts => exact derivative_monomial X ts
-  | add p q hp hq => simp [Poly.eval, Poly.diff, hp, hq]
-  | scale c p hp =>
-      simp [Poly.eval, Poly.diff, derivative_mul, hp,
-        IsScalarTower.algebraMap_eq ℚ ℝ ℝ[X], Polynomial.algebraMap_eq]
+  have h : (derivative.restrictScalars ℚ).comp (eval X) =
+      diff X (fun t => derivative (X t)) := by
+    apply linearMap_ext; intro ts
+    simpa [eval, diff, RoughPaths.AreaReduction.Poly.diff] using derivative_monomial X ts
+  exact LinearMap.congr_fun h p
 
 variable {s : ℕ}
 
 def momentPrefix (ls : LowStorage s ℝ) (e : ℕ) (t : PTree) : ℝ :=
-  endpoint (extend ls.A) (extend ls.B) (extend (stageWeight ls.toRK t)) e
+  ls.pathPrefix (stageWeight ls.toRK t) e
 
 def momentSlope (ls : LowStorage s ℝ) (e : ℕ) (t : PTree) : ℝ :=
-  extend ls.B e * register (extend ls.A) (extend (stageWeight ls.toRK t)) (e + 1)
+  ls.slope (stageWeight ls.toRK t) e
 
 def momentPath (ls : LowStorage s ℝ) (e : ℕ) (t : PTree) : ℝ[X] :=
   C (momentPrefix ls e t) + X * C (momentSlope ls e t)
@@ -64,25 +61,19 @@ def momentPath (ls : LowStorage s ℝ) (e : ℕ) (t : PTree) : ℝ[X] :=
 
 @[simp] theorem momentPath_eval_one (ls : LowStorage s ℝ) (e : ℕ) (t : PTree) :
     (momentPath ls e t).eval 1 = momentPrefix ls (e + 1) t := by
-  simp [momentPath, momentPrefix, momentSlope, endpoint]
+  simp [momentPath, momentPrefix, momentSlope, prefix_succ]
 
 theorem momentSlope_eq (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (t : PTree) :
     momentSlope ls e t = ∑ j, ls.beta ⟨e, he⟩ j * stageWeight ls.toRK t j :=
-  increment_eq_sum_beta ls _ ⟨e, he⟩
+  slope_coe ls _ ⟨e, he⟩
 
 theorem momentPrefix_eq_A (ls : LowStorage s ℝ) (i : Fin s) (t : PTree) :
     momentPrefix ls i t = ∑ j, ls.toRK.A i j * stageWeight ls.toRK t j :=
-  endpoint_eq_toRK_A ls _ i
+  prefix_eq_A ls _ i
 
 theorem momentPrefix_eq_weight (ls : LowStorage s ℝ) (t : PTree) :
     momentPrefix ls s t = weight ls.toRK t :=
-  endpoint_eq_toRK_b ls _
-
-private theorem register_sub (α u v : ℕ → ℝ) (n : ℕ) :
-    register α (fun i => u i - v i) n = register α u n - register α v n := by
-  induction n with
-  | zero => simp [register]
-  | succ n ih => simp [register, ih]; ring
+  prefix_eq_b ls _
 
 theorem momentSlope_area (ls : LowStorage s ℝ) (e : ℕ) (u v : PTree) :
     momentSlope ls e (graft u v) - momentSlope ls e (graft v u) =
@@ -90,22 +81,12 @@ theorem momentSlope_area (ls : LowStorage s ℝ) (e : ℕ) (u v : PTree) :
         momentPrefix ls e v * momentSlope ls e u := by
   have hc : ls.areaColumn (stageWeight ls.toRK u) (stageWeight ls.toRK v) =
       fun i => stageWeight ls.toRK (graft u v) i - stageWeight ls.toRK (graft v u) i := by
-    cases u with
-    | node us => cases v with
-      | node vs => exact areaColumn_stageWeight ls us vs
-  have hext := extend_areaColumn ls (stageWeight ls.toRK u) (stageWeight ls.toRK v)
-  rw [hc] at hext
-  have hext' : extend (fun i => stageWeight ls.toRK (graft u v) i -
-      stageWeight ls.toRK (graft v u) i) =
-      fun i => extend (stageWeight ls.toRK (graft u v)) i -
-        extend (stageWeight ls.toRK (graft v u)) i := by
-    funext i; simp [extend]; split <;> simp
-  rw [hext'] at hext
-  have h := register_bracket (extend ls.A) (extend ls.B)
-    (extend (stageWeight ls.toRK u)) (extend (stageWeight ls.toRK v)) e
-  rw [← hext, register_sub] at h
-  unfold momentSlope momentPrefix
-  linear_combination extend ls.B e * h
+    cases u; cases v; exact areaColumn_stageWeight ls _ _
+  have h := slope_area ls (stageWeight ls.toRK u) (stageWeight ls.toRK v) e
+  rw [hc] at h
+  by_cases he : e < s
+  · simpa [momentSlope, momentPrefix, slope, he, mul_sub, Finset.sum_sub_distrib] using h
+  · simp [momentSlope, slope, he]
 
 theorem momentPath_area (ls : LowStorage s ℝ) (e : ℕ) (u v : PTree) :
     derivative (momentPath ls e (graft u v)) - derivative (momentPath ls e (graft v u)) =
@@ -118,7 +99,7 @@ theorem momentPath_area (ls : LowStorage s ℝ) (e : ℕ) (u v : PTree) :
 
 theorem eval_momentPrefix_node (ls : LowStorage s ℝ) (i : Fin s) (ts : List PTree) :
     (Poly.monomial ts).eval (momentPrefix ls i) = stageWeight ls.toRK (.node ts) i := by
-  simp only [Poly.eval, RoughPaths.AreaReduction.Poly.eval, stageWeight_node]
+  simp only [Poly.monomial, RoughPaths.AreaReduction.Poly.eval_monomial, stageWeight_node]
   induction ts with
   | nil => rfl
   | cons t ts ih =>
@@ -128,22 +109,20 @@ theorem eval_momentPrefix_node (ls : LowStorage s ℝ) (i : Fin s) (ts : List PT
 theorem rootEval_slope (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (p : Poly) :
     p.rootEval (momentSlope ls e) =
       ∑ i, ls.beta ⟨e, he⟩ i * p.eval (momentPrefix ls i) := by
-  induction p with
-  | zero => simp [Poly.rootEval, Poly.eval]
-  | monomial ts => simp only [Poly.rootEval, momentSlope_eq ls e he, eval_momentPrefix_node]
-  | add p q hp hq => simp [Poly.rootEval, Poly.eval, hp, hq, mul_add, Finset.sum_add_distrib]
-  | scale c p hp =>
-      simp only [Poly.rootEval, Poly.eval, RoughPaths.AreaReduction.Poly.eval, hp, Finset.mul_sum]
-      congr 1
-      funext i
-      ring
+  have h : Poly.rootEval (momentSlope ls e) =
+      ∑ i, ls.beta ⟨e, he⟩ i • Poly.eval (momentPrefix ls i) := by
+    apply linearMap_ext; intro ts
+    simpa only [Poly.rootEval, lift_word, LinearMap.sum_apply, LinearMap.smul_apply,
+      smul_eq_mul, eval_momentPrefix_node] using momentSlope_eq ls e he (.node ts)
+  simpa only [LinearMap.sum_apply, LinearMap.smul_apply, smul_eq_mul] using LinearMap.congr_fun h p
 
 /-- The ordered moment polynomial on one straight path segment. -/
 def orderedPath (ls : LowStorage s ℝ) (e : ℕ) (ts : List PTree) : ℝ[X] :=
   (orderedForest ts).eval (momentPath ls e)
 
 @[simp] theorem orderedPath_nil (ls : LowStorage s ℝ) (e : ℕ) :
-    orderedPath ls e [] = 1 := rfl
+    orderedPath ls e [] = 1 := by
+  simp [orderedPath, Poly.eval, Poly.monomial]
 
 /-- Differential recursion of the ordered expansion on a segment. -/
 theorem orderedPath_derivative (ls : LowStorage s ℝ) (e : ℕ)

@@ -8,7 +8,7 @@ package «LeanBSeries» where
 
 require «lean-rough-paths» from git
   "https://github.com/luke-a-thompson/LeanRoughPaths" @
-  "95f85b915352e0838d1da62538763622481a020a"
+  "2402b9395fc33b51bc46ac795fb69f939258015d"
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4"

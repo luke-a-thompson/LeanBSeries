@@ -6,9 +6,12 @@ import BSeries.LieButcher.OrderedExpansion
 namespace BSeries.WilliamsonMoments
 
 open HopfAlgebras
+open HopfAlgebras.Word.Polynomial
+
+noncomputable section
 
 def orderedTree : PTree → Poly
-  | .node ts => (ts.attach.map fun t => orderedTree t.1).foldl Poly.integrate (.monomial [])
+  | .node ts => (ts.attach.map fun t => orderedTree t.1).foldl (fun p q => Poly.integrate p q) (.monomial [])
   termination_by t => PTree.order t
   decreasing_by
     have := Poly.order_le_of_mem t.2
@@ -16,7 +19,7 @@ def orderedTree : PTree → Poly
     omega
 
 def orderedForest (ts : List PTree) : Poly :=
-  (ts.map orderedTree).foldl Poly.integrate (.monomial [])
+  (ts.map orderedTree).foldl (fun p q => Poly.integrate p q) (.monomial [])
 
 theorem orderedTree_node (ts : List PTree) : orderedTree (.node ts) = orderedForest ts := by
   rw [orderedTree, orderedForest, List.attach_map_val]
@@ -34,7 +37,7 @@ theorem orderedForest_append_singleton (ts : List PTree) (t : PTree) :
 private theorem homogeneous_fold (f : PTree → Poly) (ts : List PTree)
     (hf : ∀ t ∈ ts, (f t).Homogeneous (PTree.order t - 1))
     (p : Poly) (n : ℕ) (hp : p.Homogeneous n) :
-    ((ts.map f).foldl Poly.integrate p).Homogeneous (n + PTree.orderList ts) := by
+    ((ts.map f).foldl (fun p q => Poly.integrate p q) p).Homogeneous (n + PTree.orderList ts) := by
   induction ts generalizing p n with
   | nil => simpa using hp
   | cons t ts ih =>
@@ -91,11 +94,11 @@ theorem exact_area (u v : PTree) :
   rfl
 
 theorem rootEval_exact (p : Poly) : p.rootEval exactVelocity = p.eval exactMoment := by
-  induction p with
-  | zero => rfl
-  | monomial ts => rfl
-  | add p q hp hq => simp [Poly.rootEval, Poly.eval, hp, hq]
-  | scale c p hp => simp [Poly.rootEval, Poly.eval, hp]
+  have h : Poly.rootEval exactVelocity = Poly.eval exactMoment := by
+    apply linearMap_ext
+    intro ts
+    simp [Poly.rootEval, Poly.eval, exactVelocity, PTree.children]
+  exact LinearMap.congr_fun h p
 
 theorem eval_integrate_exact {p q : Poly} {m n : ℕ}
     (hp : p.Homogeneous m) (hq : q.Homogeneous n) :
@@ -141,4 +144,5 @@ theorem eval_orderedForest_exact (ts : List PTree) :
     (orderedForest ts).eval exactMoment = OrderedExpansion.exactCoeff ts := by
   simpa [orderedTree_node, PTree.children] using eval_orderedTree_exact (.node ts)
 
+end
 end BSeries.WilliamsonMoments
