@@ -1,5 +1,5 @@
 import BSeries.Numerics.Williamson.PolynomialPath
-import BSeries.Algebra.ChronologicalPolynomial
+import RoughPaths.Signature.Polynomial
 
 /-! # The exponential lift evaluates the universal moment polynomials -/
 
@@ -31,7 +31,7 @@ theorem polyFlow_succ (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (ts : List 
       polyFlow ls e (ts.take j) * (((ts.drop j).length.factorial : ℝ))⁻¹ *
         (((ts.drop j).map fun t => ∑ i, ls.beta ⟨e, he⟩ i *
           polyFlow ls i t.children).prod) := by
-  have h := ChronologicalPolynomial.eval_one (orderedPath ls e)
+  have h := RoughPaths.Word.PolynomialPath.eval_one (orderedPath ls e)
     (fun t => (orderedTree t).rootEval (momentSlope ls e))
     (orderedPath_nil ls e) (orderedPath_derivative ls e) ts
   simp only [orderedPath_eval, momentPath_eval_zero, momentPath_eval_one,

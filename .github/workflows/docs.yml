@@ -19,17 +19,10 @@ jobs:
     name: Build docs (doc-gen4)
     runs-on: ubuntu-latest
     steps:
-      # Side-by-side checkout: the lakefile requires ../lean-rough-paths.
       - name: Check out LeanBSeries
         uses: actions/checkout@v4
         with:
           path: lean-b-series
-
-      - name: Check out LeanRoughPaths (sibling dependency)
-        uses: actions/checkout@v4
-        with:
-          repository: daniil-shmelev/LeanRoughPaths
-          path: lean-rough-paths
 
       - name: Build library (with Mathlib cache)
         uses: leanprover/lean-action@v1

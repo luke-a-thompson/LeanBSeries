@@ -118,7 +118,7 @@ theorem momentPath_area (ls : LowStorage s ℝ) (e : ℕ) (u v : PTree) :
 
 theorem eval_momentPrefix_node (ls : LowStorage s ℝ) (i : Fin s) (ts : List PTree) :
     (Poly.monomial ts).eval (momentPrefix ls i) = stageWeight ls.toRK (.node ts) i := by
-  simp only [Poly.eval, stageWeight_node]
+  simp only [Poly.eval, RoughPaths.AreaReduction.Poly.eval, stageWeight_node]
   induction ts with
   | nil => rfl
   | cons t ts ih =>
@@ -133,7 +133,7 @@ theorem rootEval_slope (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (p : Poly)
   | monomial ts => simp only [Poly.rootEval, momentSlope_eq ls e he, eval_momentPrefix_node]
   | add p q hp hq => simp [Poly.rootEval, Poly.eval, hp, hq, mul_add, Finset.sum_add_distrib]
   | scale c p hp =>
-      simp only [Poly.rootEval, Poly.eval, hp, Finset.mul_sum]
+      simp only [Poly.rootEval, Poly.eval, RoughPaths.AreaReduction.Poly.eval, hp, Finset.mul_sum]
       congr 1
       funext i
       ring

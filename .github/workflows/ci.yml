@@ -10,23 +10,10 @@ jobs:
     name: Build (lake)
     runs-on: ubuntu-latest
     steps:
-      # The lakefile requires the sibling LeanRoughPaths checkout at
-      # ../lean-rough-paths, so both repositories are checked out side
-      # by side inside the workspace.
       - name: Check out LeanBSeries
         uses: actions/checkout@v4
         with:
           path: lean-b-series
-
-      - name: Check out LeanRoughPaths (sibling dependency)
-        uses: actions/checkout@v4
-        with:
-          repository: daniil-shmelev/LeanRoughPaths
-          ref: 15ecc0414ae805b1ae57f05c8be170bd68361d19
-          path: lean-rough-paths
-
-      - name: Apply LeanRoughPaths compatibility fix for Lean 4.36
-        run: git -C lean-rough-paths apply ../lean-b-series/patches/lean-rough-paths-lean-4.36.patch
 
       - name: Build with Lake
         uses: leanprover/lean-action@v1

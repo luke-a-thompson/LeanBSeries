@@ -21,19 +21,15 @@ their exact-flow specialization. It uses only the standard Lean axioms.
 
 ## Building
 
-Requires the sibling repository
-[LeanRoughPaths](https://github.com/daniil-shmelev/LeanRoughPaths)
-(rooted trees and their Hopf algebras) checked out next to this one:
+Lake fetches the pinned [LeanRoughPaths fork](https://github.com/luke-a-thompson/LeanRoughPaths/tree/area-generation), including homogeneous area generation and the shared polynomial reduction.
 
-```
-git clone https://github.com/daniil-shmelev/LeanRoughPaths lean-rough-paths
-git clone https://github.com/daniil-shmelev/LeanBSeries    lean-b-series
-git -C lean-rough-paths checkout 15ecc0414ae805b1ae57f05c8be170bd68361d19
-git -C lean-rough-paths apply ../lean-b-series/patches/lean-rough-paths-lean-4.36.patch
+```sh
+git clone https://github.com/luke-a-thompson/LeanBSeries lean-b-series
 cd lean-b-series
 lake exe cache get
 lake build
 ```
 
-The small dependency patch makes six induction patterns independent of the
-case-name change in Lean 4.36. CI uses the same dependency revision and patch.
+The Williamson proof uses `RoughPaths.AreaReduction.diff_primitive`; its
+rooted-tree grading and method-specific path identities remain in this repository.
+The general word theorem is `HopfAlgebras.Word.Polynomial.word_generated` in the fork.
