@@ -19,14 +19,14 @@ universe v
 
 variable {R : Type v}
 
-/-- **Bazavov's compatibility condition** (arXiv:2509.20599, Theorem 3.1):
+/-- **Bazavov's compatibility condition** (Bazavov, BIT Numer. Math. 66 (2026), article 38, arXiv:2506.07359, Theorem 2):
 `a_{ik} (b_j - a_{kj}) = (a_{ij} - a_{kj}) b_k` whenever `k = j + 1 ≤ i`. -/
 def BazavovCondition [CommRing R] {s : ℕ} (rk : RungeKutta (Fin s) R) : Prop :=
   ∀ i j k : Fin s, (j : ℕ) + 1 = (k : ℕ) → k ≤ i →
     rk.A i k * (rk.b j - rk.A k j) = (rk.A i j - rk.A k j) * rk.b k
 
 /-- Williamson 2N tableaux satisfy Bazavov's condition (the forward
-direction of arXiv:2509.20599, Theorem 3.1). -/
+direction of Bazavov, arXiv:2506.07359, Theorem 2). -/
 theorem IsWilliamson2N.bazavovCondition [CommRing R] {s : ℕ}
     {rk : RungeKutta (Fin s) R} (h : IsWilliamson2N rk) :
     BazavovCondition rk := by
@@ -88,8 +88,8 @@ theorem ofTableau_A_of_succ [Field R] (rk : RungeKutta (Fin (n + 1)) R)
 
 end LowStorage
 
-/-- **Bazavov's theorem, converse direction** (arXiv:2509.20599,
-Theorem 3.1): an explicit tableau with nonvanishing weights satisfying the
+/-- **Bazavov's theorem, converse direction** (Bazavov,
+arXiv:2506.07359, Theorem 2): an explicit tableau with nonvanishing weights satisfying the
 compatibility condition is Williamson 2N. -/
 theorem isWilliamson2N_of_bazavovCondition [Field R] {n : ℕ}
     {rk : RungeKutta (Fin (n + 1)) R} (hexp : IsExplicit rk)
@@ -147,7 +147,7 @@ theorem isWilliamson2N_of_bazavovCondition [Field R] {n : ℕ}
     · rw [rowDifference_eq_zero_of_lt hexp hip, LowStorage.beta_eq_zero_of_lt _ hip]
 
 /-- **Bazavov's characterisation of Williamson 2N schemes**
-(arXiv:2509.20599, Theorem 3.1; Bazavov, Theorem 2): an explicit tableau
+(Bazavov, BIT Numer. Math. 66 (2026), article 38, arXiv:2506.07359, Theorem 2; restated in arXiv:2509.20599, Theorem 3.1): an explicit tableau
 with nonvanishing weights is Williamson 2N if and only if it satisfies the
 compatibility condition. -/
 theorem isWilliamson2N_iff_bazavovCondition [Field R] {n : ℕ}
