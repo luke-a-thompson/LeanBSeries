@@ -1,7 +1,6 @@
 import BSeries.LieButcher.CommutatorFreeCharacter
 import BSeries.Numerics.Williamson.CommutatorFree
-import BSeries.Numerics.Williamson.PolynomialPath
-import RoughPaths.Signature.Polynomial
+import BSeries.Numerics.Williamson.OrderedMoments
 
 /-!
 # The exponential lift evaluates the universal moment polynomials
@@ -15,11 +14,66 @@ induction on trees identifies the stage vectors.
 namespace BSeries.WilliamsonMoments
 
 open HopfAlgebras RungeKutta RungeKutta.LowStorage
+open HopfAlgebras.Word.Polynomial
 open scoped BigOperators
 
 noncomputable section
 
 variable {s : ℕ}
+
+def momentPrefix (ls : LowStorage s ℝ) (e : ℕ) (t : PTree) : ℝ :=
+  ls.pathPrefix (stageWeight ls.toRK t) e
+
+def momentSlope (ls : LowStorage s ℝ) (e : ℕ) (t : PTree) : ℝ :=
+  ls.slope (stageWeight ls.toRK t) e
+
+theorem momentPrefix_succ (ls : LowStorage s ℝ) (e : ℕ) :
+    momentPrefix ls (e + 1) = fun t => momentPrefix ls e t + momentSlope ls e t :=
+  funext fun _ => prefix_succ ls _ e
+
+theorem momentSlope_eq (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (t : PTree) :
+    momentSlope ls e t = ∑ j, ls.beta ⟨e, he⟩ j * stageWeight ls.toRK t j :=
+  slope_coe ls _ ⟨e, he⟩
+
+theorem momentPrefix_eq_A (ls : LowStorage s ℝ) (i : Fin s) (t : PTree) :
+    momentPrefix ls i t = ∑ j, ls.toRK.A i j * stageWeight ls.toRK t j :=
+  prefix_eq_A ls _ i
+
+theorem momentPrefix_eq_weight (ls : LowStorage s ℝ) (t : PTree) :
+    momentPrefix ls s t = weight ls.toRK t :=
+  prefix_eq_b ls _
+
+theorem momentSlope_area (ls : LowStorage s ℝ) (e : ℕ) (u v : PTree) :
+    momentSlope ls e (graft u v) - momentSlope ls e (graft v u) =
+      momentPrefix ls e u * momentSlope ls e v -
+        momentPrefix ls e v * momentSlope ls e u := by
+  have hc : ls.areaColumn (stageWeight ls.toRK u) (stageWeight ls.toRK v) =
+      fun i => stageWeight ls.toRK (graft u v) i - stageWeight ls.toRK (graft v u) i := by
+    cases u; cases v; exact areaColumn_stageWeight ls _ _
+  have h := slope_area ls (stageWeight ls.toRK u) (stageWeight ls.toRK v) e
+  rw [hc] at h
+  by_cases he : e < s
+  · simpa [momentSlope, momentPrefix, slope, he, mul_sub, Finset.sum_sub_distrib] using h
+  · simp [momentSlope, slope, he]
+
+theorem eval_momentPrefix_node (ls : LowStorage s ℝ) (i : Fin s) (ts : List PTree) :
+    (Poly.monomial ts).eval (momentPrefix ls i) = stageWeight ls.toRK (.node ts) i := by
+  simp only [Poly.monomial, HopfAlgebras.Word.AreaReduction.Poly.eval_monomial, stageWeight_node]
+  induction ts with
+  | nil => rfl
+  | cons t ts ih =>
+      simp only [List.map_cons, List.prod_cons, stageWeightList_cons,
+        momentPrefix_eq_A, ih]
+
+theorem rootEval_slope (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (p : Poly) :
+    p.rootEval (momentSlope ls e) =
+      ∑ i, ls.beta ⟨e, he⟩ i * p.eval (momentPrefix ls i) := by
+  have h : Poly.rootEval (momentSlope ls e) =
+      ∑ i, ls.beta ⟨e, he⟩ i • Poly.eval (momentPrefix ls i) := by
+    apply linearMap_ext; intro ts
+    simpa only [Poly.rootEval, lift_word, LinearMap.sum_apply, LinearMap.smul_apply,
+      smul_eq_mul, eval_momentPrefix_node] using momentSlope_eq ls e he (.node ts)
+  simpa only [LinearMap.sum_apply, LinearMap.smul_apply, smul_eq_mul] using LinearMap.congr_fun h p
 
 def polyFlow (ls : LowStorage s ℝ) (e : ℕ) (ts : List PTree) : ℝ :=
   (orderedForest ts).eval (momentPrefix ls e)
@@ -42,12 +96,8 @@ theorem polyFlow_succ (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (ts : List 
       polyFlow ls e (ts.take j) * (((ts.drop j).length.factorial : ℝ))⁻¹ *
         (((ts.drop j).map fun t => ∑ i, ls.beta ⟨e, he⟩ i *
           polyFlow ls i t.children).prod) := by
-  have h := RoughPaths.Word.PolynomialPath.eval_one (orderedPath ls e)
-    (fun t => (orderedTree t).rootEval (momentSlope ls e))
-    (orderedPath_nil ls e) (orderedPath_derivative ls e) ts
-  simp only [orderedPath_eval, momentPath_eval_zero, momentPath_eval_one,
-    rootEval_slope ls e he, orderedTree_eq] at h
-  exact h
+  rw [polyFlow, momentPrefix_succ, eval_orderedForest_add _ _ (momentSlope_area ls e)]
+  simp only [rootEval_slope ls e he, orderedTree_eq, polyFlow]
 
 /-- The stage vector of a tree: its moment polynomial at each tableau row. -/
 def stageVector (ls : LowStorage s ℝ) (t : PTree) : Fin s → ℝ :=

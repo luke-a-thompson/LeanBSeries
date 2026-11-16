@@ -94,6 +94,14 @@ def rootEval {R : Type*} [CommRing R] [Algebra ℚ R] (V : PTree → R) : Poly �
 @[simp] theorem rootEval_monomial {R : Type*} [CommRing R] [Algebra ℚ R]
     (V : PTree → R) (ts : List PTree) : rootEval V (monomial ts) = V (.node ts) := lift_word _ _
 
+theorem map_rootEval {R S : Type*} [CommRing R] [CommRing S]
+    [Algebra ℚ R] [Algebra ℚ S] (f : R →ₐ[ℚ] S) (V : PTree → R) (p : Poly) :
+    f (p.rootEval V) = p.rootEval (fun t => f (V t)) := by
+  have h : f.toLinearMap.comp (rootEval V) = rootEval (fun t => f (V t)) := by
+    apply linearMap_ext; intro ts
+    simp [rootEval]
+  exact LinearMap.congr_fun h p
+
 /-- Integrate a moment polynomial against the stage column of another. -/
 def integrate : Poly →ₗ[ℚ] Poly →ₗ[ℚ] Poly :=
   lift₂ (fun ts us => primitive (ts.length + 1) ts (.node us))

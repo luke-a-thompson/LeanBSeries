@@ -1,3 +1,4 @@
+import BSeries.Algebra.AreaSegment
 import BSeries.Numerics.Williamson.MomentPolynomial
 import BSeries.LieButcher.OrderedExpansion
 import Mathlib.Basic.Real.Basic
@@ -66,6 +67,23 @@ theorem homogeneous_orderedForest (ts : List PTree) :
     (orderedForest ts).Homogeneous (PTree.orderList ts) := by
   simpa [orderedForest] using homogeneous_fold orderedTree ts
     (fun t _ => homogeneous_orderedTree t) (.monomial []) 0 (.monomial [])
+
+/-- **Chen's identity for the ordered moment polynomials** on the straight
+segment from `X` to `X + V`, whenever `(X, V)` satisfies the area identity. -/
+theorem eval_orderedForest_add (X V : PTree → ℝ)
+    (harea : ∀ u v, V (graft u v) - V (graft v u) = X u * V v - X v * V u)
+    (ts : List PTree) :
+    (orderedForest ts).eval (fun t => X t + V t) =
+      ∑ j ∈ Finset.range (ts.length + 1),
+        (orderedForest (ts.take j)).eval X * (((ts.drop j).length.factorial : ℝ))⁻¹ *
+          ((ts.drop j).map fun t => (orderedTree t).rootEval V).prod := by
+  refine AreaReduction.eval_segment X V orderedForest
+    (fun t => (orderedTree t).rootEval V) orderedForest_nil (fun ts t => ?_) ts
+  have h := Poly.diff_integrate (AreaReduction.segment X V) (fun a => Polynomial.C (V a))
+    (AreaReduction.segment_area graft X V harea) (orderedForest ts) (orderedTree t)
+  have hC := Poly.map_rootEval (Polynomial.CAlgHom : ℝ →ₐ[ℚ] Polynomial ℝ) V (orderedTree t)
+  rw [orderedForest_append_singleton]
+  exact h.trans (congrArg _ hC.symm)
 
 /-- The prescribed classical exact moments. -/
 noncomputable def exactMoment (t : PTree) : ℝ := (PTree.treeFactorial t : ℝ)⁻¹
