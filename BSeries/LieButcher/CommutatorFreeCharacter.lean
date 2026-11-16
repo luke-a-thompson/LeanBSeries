@@ -214,6 +214,56 @@ theorem singleExponential_not_hasOrder_two [CharZero R] :
     OrderedExpansion.treeDenominator, PTree.bullet, PTree.chain2, PTree.order,
     PTree.orderList] at h1
 
+/-! ### A memoised evaluator
+
+`slope` re-expands a stage generator at every use. For machine-checked
+order conditions, `slopeData` stores the stage generators of each tree
+once, so evaluation is polynomial in the forest order. -/
+
+section Evaluator
+
+variable {s : ℕ}
+
+/-- A stored stage vector, read back as a function of the stage. -/
+def ofData (v : List R) (i : Fin s) : R := v.getD i 0
+
+/-- The stage generators of a tree as data: `[K₀(τ), …, K_{s-1}(τ)]`.
+The children's data is computed before any stage is evaluated. -/
+def slopeData (cf : CommutatorFreeMethod (Fin s) R) : PTree → List R
+  | .node ts =>
+      let vs := ts.attach.map fun τ => slopeData cf τ.1
+      List.ofFn fun i => expCoeff (cf.stageExps i) (vs.map ofData)
+  termination_by τ => PTree.order τ
+  decreasing_by exact PTree.order_lt_of_mem_children τ.2
+
+theorem ofData_slopeData (cf : CommutatorFreeMethod (Fin s) R) :
+    ∀ τ : PTree, ofData (slopeData cf τ) = cf.slope τ
+  | .node ts => by
+      funext i
+      have hvs : (ts.attach.map fun τ => slopeData cf τ.1).map ofData =
+          ts.map cf.slope := by
+        rw [List.map_map, ← List.attach_map_val (l := ts) (f := cf.slope)]
+        exact List.map_congr_left fun τ _ => ofData_slopeData cf τ.1
+      have hget : ∀ f : Fin s → R, (List.ofFn f).getD i 0 = f i := fun f => by simp
+      rw [slopeData, slope_node]
+      simp only [ofData, hget]
+      exact congrArg _ hvs
+  termination_by τ => PTree.order τ
+  decreasing_by exact PTree.order_lt_of_mem_children τ.2
+
+/-- The memoised method character. -/
+def fastMethodChar (cf : CommutatorFreeMethod (Fin s) R) (ω : PlanarForest) : R :=
+  expCoeff cf.stepExps ((ω.map (slopeData cf)).map ofData)
+
+/-- **The memoised evaluator computes the method character.** -/
+theorem fastMethodChar_eq (cf : CommutatorFreeMethod (Fin s) R) :
+    fastMethodChar cf = cf.methodChar := by
+  funext ω
+  rw [fastMethodChar, methodChar, List.map_map]
+  exact congrArg _ (List.map_congr_left fun τ _ => ofData_slopeData cf τ)
+
+end Evaluator
+
 end CommutatorFreeMethod
 
 /-! ### Classical order does not transfer through a single exponential -/

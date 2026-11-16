@@ -34,7 +34,7 @@ variable {s : ℕ} [CommRing R]
 `exp(V_m)` for `m < i`, where `V_m = Σ_j β_{m,j} K_j`, and the step
 composes all `s` of them. Each stage adds exactly one new exponential, so
 the lift uses `s` exponentials per step in two registers. -/
-noncomputable def toCommutatorFree (ls : LowStorage s R) :
+def toCommutatorFree (ls : LowStorage s R) :
     CommutatorFreeMethod (Fin s) R where
   stageExps i := ((List.finRange s).filter (fun m => m < i)).map
     fun m => ls.beta m
