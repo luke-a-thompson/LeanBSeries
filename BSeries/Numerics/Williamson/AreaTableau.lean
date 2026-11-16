@@ -137,33 +137,6 @@ theorem slope_area (ls : LowStorage s R) (u v : Fin s → R) (n : ℕ) :
     ring
   · simp [slope, hn]
 
-/-- The coefficient path on a straight segment. -/
-def coefficientPath (ls : LowStorage s R) (u : Fin s → R) (n : ℕ) (θ : R) : R :=
-  ls.pathPrefix u n + θ * ls.slope u n
-
-/-- The area integrand is constant along each straight segment. -/
-theorem coefficientPath_area_integrand (ls : LowStorage s R) (u v : Fin s → R)
-    (n : ℕ) (θ : R) :
-    ls.coefficientPath u n θ * ls.slope v n -
-      ls.coefficientPath v n θ * ls.slope u n = ls.slope (ls.areaColumn u v) n := by
-  rw [slope_area]
-  unfold coefficientPath
-  ring
-
-/-- Accumulated signed area, including the current straight segment. -/
-def coefficientArea (ls : LowStorage s R) (u v : Fin s → R) (n : ℕ) (θ : R) : R :=
-  (∑ i : Fin s, if i.val < n then
-    ls.pathPrefix u i * ls.slope v i - ls.pathPrefix v i * ls.slope u i else 0) +
-    θ * (ls.pathPrefix u n * ls.slope v n - ls.pathPrefix v n * ls.slope u n)
-
-/-- Area closure holds at every point, including when coefficients vanish. -/
-theorem coefficientPath_area (ls : LowStorage s R) (u v : Fin s → R)
-    (n : ℕ) (θ : R) :
-    ls.coefficientArea u v n θ = ls.coefficientPath (ls.areaColumn u v) n θ := by
-  unfold coefficientArea coefficientPath
-  simp_rw [← slope_area]
-  simp only [slope_coe, pathPrefix]
-
 open HopfAlgebras in
 /-- The grafting identity (equation (7)): areas of elementary columns
 are differences of elementary columns, with no restriction on tree order. -/
