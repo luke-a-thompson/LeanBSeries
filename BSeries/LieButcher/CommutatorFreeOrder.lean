@@ -3,6 +3,7 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Daniil Shmelev
 -/
+import BSeries.LieButcher.ForestOrder
 import BSeries.LieButcher.Series
 import BSeries.Numerics.EES25
 
@@ -73,31 +74,6 @@ namespace LowStorage
 
 variable {R : Type u}
 
-private theorem order_le_orderList_of_mem :
-    ∀ {ts : List PTree} {t : PTree}, t ∈ ts →
-      PTree.order t ≤ PTree.orderList ts := by
-  intro ts
-  induction ts with
-  | nil => intro t h; cases h
-  | cons a ts ih =>
-      intro t h
-      rw [PTree.orderList_cons]
-      rcases List.mem_cons.mp h with rfl | h
-      · exact Nat.le_add_right _ _
-      · exact le_trans (ih h) (Nat.le_add_left _ _)
-
-private theorem orderList_take_le (ω : List PTree) (j : ℕ) :
-    PTree.orderList (ω.take j) ≤ PTree.orderList ω := by
-  conv_rhs => rw [← List.take_append_drop j ω]
-  rw [PTree.orderList_append]
-  exact Nat.le_add_right _ _
-
-private theorem orderList_drop_le (ω : List PTree) (j : ℕ) :
-    PTree.orderList (ω.drop j) ≤ PTree.orderList ω := by
-  conv_rhs => rw [← List.take_append_drop j ω]
-  rw [PTree.orderList_append]
-  exact Nat.le_add_left _ _
-
 /-- The Lie–Butcher flow character `u_e` after `e` exponentials of the
 Bazavov commutator-free lift (Owren's substitution recursion;
 arXiv:2509.20599, Appendix E.2, equation (18)): `u_0 = ε` and
@@ -124,12 +100,12 @@ def flowChar [Field R] {s : ℕ} (ls : LowStorage s R) :
         (PTree.orderList ω) with h | h
       · exact Prod.Lex.left _ _ h
       · have heq : PTree.orderList (ω.take j) = PTree.orderList ω :=
-          le_antisymm (orderList_take_le ω j) h
+          le_antisymm (PTree.orderList_take_le ω j) h
         rw [heq]
         exact Prod.Lex.right _ (by omega)
     · have h1 : PTree.order τ.1 ≤ PTree.orderList (ω.drop j) :=
-        order_le_orderList_of_mem τ.2
-      have h2 := orderList_drop_le ω j
+        PTree.order_le_orderList_of_mem τ.2
+      have h2 := PTree.orderList_drop_le ω j
       have h3 := PTree.order_eq_one_add_orderList_children τ.1
       exact Prod.Lex.left _ _ (by omega)
 
@@ -164,6 +140,28 @@ theorem list_sum_range_eq {M : Type*} [AddCommMonoid M] :
       rw [List.range_succ, List.map_append, List.sum_append,
         Finset.sum_range_succ, list_sum_range_eq n f]
       simp
+
+private theorem slope_sum [Field R] {s : ℕ} (ls : LowStorage s R) (e : ℕ)
+    (he : e < s) (f : ℕ → R) :
+    ((List.range s).map fun i =>
+      (if h : e < s ∧ i < s then ls.beta ⟨e, h.1⟩ ⟨i, h.2⟩ else 0) * f i).sum =
+      ∑ i, ls.beta ⟨e, he⟩ i * f i := by
+  rw [list_sum_range_eq, ← Fin.sum_univ_eq_sum_range (fun i =>
+    (if h : e < s ∧ i < s then ls.beta ⟨e, h.1⟩ ⟨i, h.2⟩ else 0) * f i) s]
+  exact Finset.sum_congr rfl fun i _ => by rw [dite_eq_left ⟨he, i.isLt⟩]
+
+/-- The defining recursion, for an exponential inside the stage range. -/
+theorem flowChar_succ [Field R] {s : ℕ} (ls : LowStorage s R) (e : ℕ)
+    (he : e < s) (ts : List PTree) :
+    flowChar ls (e + 1) ts = ∑ j ∈ Finset.range (ts.length + 1),
+      flowChar ls e (ts.take j) * (((ts.drop j).length.factorial : R))⁻¹ *
+        (((ts.drop j).map fun t => ∑ i, ls.beta ⟨e, he⟩ i *
+          flowChar ls i t.children).prod) := by
+  rw [flowChar, list_sum_range_eq]
+  refine Finset.sum_congr rfl fun j _ => ?_
+  simp only [slope_sum ls e he, mul_assoc]
+  rw [List.attach_map_val (l := ts.drop j) (f := fun t =>
+    ∑ i, ls.beta ⟨e, he⟩ i * flowChar ls i t.children)]
 
 /-- The flow character on the single-node forest accumulates the row sums
 of the slope weights: `u_e([•]) = Σ_{m<e} Σ_i β_{m,i}`. -/
@@ -379,7 +377,7 @@ def slopeList [Field R] {s : ℕ} (ls : LowStorage s R) : PTree → List R
   termination_by τ => PTree.order τ
   decreasing_by
     have h1 : PTree.order τ.1 ≤ PTree.orderList ts :=
-      order_le_orderList_of_mem τ.2
+      PTree.order_le_orderList_of_mem τ.2
     have h2 : PTree.order (PTree.node ts) = 1 + PTree.orderList ts :=
       PTree.order_eq_one_add_orderList_children _
     omega
@@ -435,7 +433,7 @@ private theorem slopeList_eq_trueSlopes [Field R] {s : ℕ}
   termination_by τ => PTree.order τ
   decreasing_by
     have h1 : PTree.order τ.1 ≤ PTree.orderList ts :=
-      order_le_orderList_of_mem τ.2
+      PTree.order_le_orderList_of_mem τ.2
     have h2 : PTree.order (PTree.node ts) = 1 + PTree.orderList ts :=
       PTree.order_eq_one_add_orderList_children _
     omega

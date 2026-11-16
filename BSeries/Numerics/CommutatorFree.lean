@@ -128,6 +128,23 @@ theorem applyList_zero_singleton (Φ : ExponentialAction A M) (y : M) :
     Φ.applyList [0] y = y := by
   simp [Φ.act_zero]
 
+/-- The translation action of a module on itself: the "flat" exponential
+map, under which commutator-free methods collapse to classical
+Runge–Kutta schemes. -/
+def translation (E : Type u)
+    [AddCommMonoid E] : ExponentialAction E E where
+  act a y := y + a
+  act_zero y := add_zero y
+
+theorem applyList_translation {E : Type u}
+    [AddCommMonoid E] (as : List E) (y : E) :
+    (ExponentialAction.translation E).applyList as y = y + as.sum := by
+  induction as generalizing y with
+  | nil => simp
+  | cons a as ih =>
+      rw [ExponentialAction.applyList_cons, ih, List.sum_cons, ← add_assoc]
+      rfl
+
 end ExponentialAction
 
 /-- A commutator-free method represented by lists of stage-generator combinations. -/

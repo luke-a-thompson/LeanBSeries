@@ -1,5 +1,6 @@
 import BSeries.Numerics.Williamson.MomentPolynomial
 import BSeries.LieButcher.OrderedExpansion
+import Mathlib.Basic.Real.Basic
 
 /-! # Homogeneous moment polynomials for arbitrary ordered trees -/
 
@@ -14,7 +15,7 @@ def orderedTree : PTree → Poly
   | .node ts => (ts.attach.map fun t => orderedTree t.1).foldl (fun p q => Poly.integrate p q) (.monomial [])
   termination_by t => PTree.order t
   decreasing_by
-    have := Poly.order_le_of_mem t.2
+    have := PTree.order_le_orderList_of_mem t.2
     simp only [PTree.order_node]
     omega
 
@@ -57,7 +58,7 @@ theorem homogeneous_orderedTree (t : PTree) :
         (fun t _ => homogeneous_orderedTree t) (.monomial []) 0 (.monomial [])
   termination_by PTree.order t
   decreasing_by
-    have := Poly.order_le_of_mem ‹t ∈ ts›
+    have := PTree.order_le_orderList_of_mem ‹t ∈ ts›
     simp only [PTree.order_node]
     omega
 
@@ -135,7 +136,7 @@ theorem eval_orderedTree_exact (t : PTree) :
           omega
   termination_by PTree.order t
   decreasing_by
-    have := Poly.order_le_of_mem ‹t ∈ ts›
+    have := PTree.order_le_orderList_of_mem ‹t ∈ ts›
     simp only [PTree.order_node]
     omega
 

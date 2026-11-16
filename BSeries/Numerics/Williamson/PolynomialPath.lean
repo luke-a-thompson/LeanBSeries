@@ -1,4 +1,5 @@
 import BSeries.Numerics.Williamson.OrderedMoments
+import Mathlib.Algebra.Polynomial.AlgebraMap
 import Mathlib.Algebra.Polynomial.Derivative
 
 /-! # Polynomial realization of the Williamson coefficient path -/

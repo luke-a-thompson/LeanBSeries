@@ -1,3 +1,4 @@
+import BSeries.LieButcher.CommutatorFreeOrder
 import BSeries.Numerics.Williamson.PolynomialPath
 import RoughPaths.Signature.Polynomial
 
@@ -40,41 +41,6 @@ theorem polyFlow_succ (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (ts : List 
     rootEval_slope ls e he, orderedTree_eq] at h
   exact h
 
-private theorem slope_sum (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (f : ℕ → ℝ) :
-    ((List.range s).map fun i =>
-      (if h : e < s ∧ i < s then ls.beta ⟨e, h.1⟩ ⟨i, h.2⟩ else 0) * f i).sum =
-      ∑ i, ls.beta ⟨e, he⟩ i * f i := by
-  rw [list_sum_range_eq]
-  rw [← Fin.sum_univ_eq_sum_range (fun i =>
-    (if h : e < s ∧ i < s then ls.beta ⟨e, h.1⟩ ⟨i, h.2⟩ else 0) * f i) s]
-  apply Finset.sum_congr rfl
-  intro i _
-  rw [dite_eq_left ⟨he, i.isLt⟩]
-
-theorem flowChar_succ (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (ts : List PTree) :
-    flowChar ls (e + 1) ts = ∑ j ∈ Finset.range (ts.length + 1),
-      flowChar ls e (ts.take j) * (((ts.drop j).length.factorial : ℝ))⁻¹ *
-        (((ts.drop j).map fun t => ∑ i, ls.beta ⟨e, he⟩ i *
-          flowChar ls i t.children).prod) := by
-  rw [flowChar, list_sum_range_eq]
-  apply Finset.sum_congr rfl
-  intro j hj
-  simp only [slope_sum ls e he, mul_assoc]
-  rw [List.attach_map_val (l := ts.drop j) (f := fun t =>
-    ∑ i, ls.beta ⟨e, he⟩ i * flowChar ls i t.children)]
-
-private theorem order_take_le (ts : List PTree) (j : ℕ) :
-    PTree.orderList (ts.take j) ≤ PTree.orderList ts := by
-  have := PTree.orderList_append (ts.take j) (ts.drop j)
-  rw [List.take_append_drop] at this
-  omega
-
-private theorem order_drop_le (ts : List PTree) (j : ℕ) :
-    PTree.orderList (ts.drop j) ≤ PTree.orderList ts := by
-  have := PTree.orderList_append (ts.take j) (ts.drop j)
-  rw [List.take_append_drop] at this
-  omega
-
 /-- The universal polynomial gives every numerical prefix coefficient.
 The induction follows the existing `flowChar` recursion and has no order bound. -/
 theorem flowChar_eq_polyFlow (ls : LowStorage s ℝ) (e : ℕ)
@@ -95,12 +61,12 @@ theorem flowChar_eq_polyFlow (ls : LowStorage s ℝ) (e : ℕ)
       rw [flowChar_eq_polyFlow ls i t.children i.isLt.le]
   termination_by (PTree.orderList ts, e)
   decreasing_by
-    · have hle := order_take_le ts j
+    · have hle := PTree.orderList_take_le ts j
       rcases lt_or_eq_of_le hle with hlt | heq
       · exact Prod.Lex.left _ _ hlt
       · rw [heq]; exact Prod.Lex.right _ (by omega)
-    · have h₁ := Poly.order_le_of_mem ht
-      have h₂ := order_drop_le ts j
+    · have h₁ := PTree.order_le_orderList_of_mem ht
+      have h₂ := PTree.orderList_drop_le ts j
       have h₃ := PTree.order_eq_one_add_orderList_children t
       exact Prod.Lex.left _ _ (by omega)
 

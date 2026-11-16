@@ -4,3 +4,5 @@
 - Organize Williamson theory into focused modules and extract reusable matrix, polynomial, and stability lemmas.
 - Reuse Mathlib and existing order criteria; remove duplicated tree classifications and numerical checks.
 - Full `lake build` passes; the main theorem and corollary use only standard Lean axioms.
+- Define the Lie–Butcher character and `HasOrder` of a general `CommutatorFreeMethod` as the signature of its coefficient path, and state `williamson_order_transfer` for `ls.toCommutatorFree`.
+- Check the definition on Lie–Euler, on shuffle multiplicativity, and with the order-three barrier for single-exponential steps.

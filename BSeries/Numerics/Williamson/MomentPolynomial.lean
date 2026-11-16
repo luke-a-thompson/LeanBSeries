@@ -1,4 +1,5 @@
 import BSeries.Numerics.Williamson.AreaTableau
+import BSeries.LieButcher.ForestOrder
 import HopfAlgebras.Words.AreaReduction
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Algebra.Algebra.Bilinear
@@ -149,15 +150,6 @@ theorem Homogeneous.euler {R : Type*} [CommRing R] [Algebra ℚ R]
   | add _ _ hp hq => simp [hp, hq, mul_add]
   | scale c _ hp => simp [hp, Algebra.smul_def, mul_left_comm]
 
-theorem order_le_of_mem {ts : List PTree} {t : PTree} (ht : t ∈ ts) :
-    PTree.order t ≤ PTree.orderList ts := by
-  induction ts with
-  | nil => simp at ht
-  | cons u us ih =>
-      rcases List.mem_cons.mp ht with rfl | h
-      · exact Nat.le_add_right _ _
-      · exact (ih h).trans (Nat.le_add_left _ _)
-
 /-- Classical moments through the homogeneous weight determine evaluation. -/
 theorem Homogeneous.eval_congr {R : Type*} [CommRing R] [Algebra ℚ R]
     {p : Poly} {n : ℕ} (hp : p.Homogeneous n) (X Y : PTree → R)
@@ -165,7 +157,7 @@ theorem Homogeneous.eval_congr {R : Type*} [CommRing R] [Algebra ℚ R]
   induction hp with
   | zero => simp
   | monomial ts =>
-      simpa [eval] using congrArg List.prod (List.map_congr_left fun t ht => h t (order_le_of_mem ht))
+      simpa [eval] using congrArg List.prod (List.map_congr_left fun t ht => h t (PTree.order_le_orderList_of_mem ht))
   | add _ _ hp hq => simp only [map_add, hp h, hq h]
   | scale c _ hp => simp only [map_smul, hp h]
 

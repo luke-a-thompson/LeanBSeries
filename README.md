@@ -12,12 +12,30 @@ The library proves exact classical order two, exact antisymmetric order `m`,
 Williamson 2N storage, and the minimum stage count `(m + 1) / 2`.
 
 The all-order Williamson transfer theorem is
-[`BSeries.WilliamsonOrderTransfer`](BSeries/LieButcher/WilliamsonOrderTransfer.lean).
-It proves that classical order `p` implies order `p` of the exponential lift,
-for every finite stage count and every order, allowing zero coefficients.
-The proof constructs homogeneous moment polynomials using area closure,
-identifies them with the existing exponential-character recursion, and checks
-their exact-flow specialization. It uses only the standard Lean axioms.
+[`BSeries.williamson_order_transfer`](BSeries/LieButcher/WilliamsonOrderTransfer.lean):
+
+```lean
+theorem williamson_order_transfer {s p : ℕ} (ls : RungeKutta.LowStorage s ℝ)
+    (hRK : RungeKutta.HasOrder ls.toRK p) :
+    CommutatorFreeMethod.HasOrder ls.toCommutatorFree p
+```
+
+`CommutatorFreeMethod.HasOrder`
+([`CommutatorFreeCharacter.lean`](BSeries/LieButcher/CommutatorFreeCharacter.lean))
+is defined for any commutator-free method, with no reference to a Butcher
+tableau. The Lie–Butcher coefficients of a composition of exponentials are the
+signature of its piecewise-linear coefficient path, stage generators are
+expanded recursively through the stage points, and order `p` means agreement
+with the exact flow on every ordered forest of degree at most `p`. Classical
+order does not imply it in general: a step with a single exponential never has
+order three (`not_hasOrder_three_of_stepExps_singleton`).
+
+The proof identifies the coefficients of the Bazavov lift with the
+chronological recursion `LowStorage.flowChar`, constructs homogeneous moment
+polynomials using the Williamson area closure, and checks their exact-flow
+specialization. It holds for every stage count and order, allows zero
+coefficients, and uses only the standard Lean axioms (checked in the file by
+`#guard_msgs`).
 
 ## Building
 

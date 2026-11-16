@@ -66,23 +66,6 @@ private theorem sum_map_filter_finRange {E : Type w} [AddCommMonoid E]
 
 end LowStorage
 
-/-- The translation action of a module on itself: the "flat" exponential
-map, under which commutator-free methods collapse to classical
-Runge–Kutta schemes. -/
-def _root_.BSeries.ExponentialAction.translation (E : Type w)
-    [AddCommMonoid E] : ExponentialAction E E where
-  act a y := y + a
-  act_zero y := add_zero y
-
-theorem _root_.BSeries.ExponentialAction.applyList_translation {E : Type w}
-    [AddCommMonoid E] (as : List E) (y : E) :
-    (ExponentialAction.translation E).applyList as y = y + as.sum := by
-  induction as generalizing y with
-  | nil => simp
-  | cons a as ih =>
-      rw [ExponentialAction.applyList_cons, ih, List.sum_cons, ← add_assoc]
-      rfl
-
 namespace LowStorage
 
 variable {s : ℕ} [CommRing R] {E : Type w} [AddCommMonoid E] [Module R E]
