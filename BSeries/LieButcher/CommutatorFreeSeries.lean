@@ -1,10 +1,10 @@
 import BSeries.Numerics.CommutatorFree
 import BSeries.Numerics.RungeKutta
-import BSeries.LieButcher.OrderedExpansion
+import BSeries.LieButcher.Order
 import RoughPaths.Signature.Piecewise
 
 /-!
-# Lie–Butcher characters and order of commutator-free methods
+# Lie–Butcher series and order of commutator-free methods
 
 A commutator-free method advances by an ordered composition of
 exponentials `exp(V₁), …, exp(Vₙ)`, where each `V_m = Σᵢ c_{m,i} Kᵢ`
@@ -20,10 +20,10 @@ straight segment per exponential:
 * `expCoeff cs` is that signature, paired with a word of stage vectors;
 * `slope τ i` is the coefficient of the elementary differential `F(τ)`
   in `Kᵢ`, obtained by substituting the stage expansion into `F`;
-* `stageChar i` and `methodChar` are the coefficients of the stage point
+* `stageSeries i` and `series` are the coefficients of the stage point
   `Yᵢ` and of the step.
 
-`HasOrder cf p` compares `methodChar` with the exact flow on **every
+`HasOrder cf p` compares `series` with the exact flow on **every
 ordered forest** of degree at most `p`. It never mentions a Butcher
 tableau, and is not implied by classical order: a method whose step is a
 single exponential never has order three
@@ -103,16 +103,16 @@ theorem slope_node (cf : CommutatorFreeMethod ι R) (ts : List PTree) (i : ι) :
   rw [slope, List.attach_map_val (f := cf.slope)]
 
 /-- Lie–Butcher coefficients of the `i`-th stage point. -/
-def stageChar (cf : CommutatorFreeMethod ι R) (i : ι) : LSSeries R :=
+def stageSeries (cf : CommutatorFreeMethod ι R) (i : ι) : LSSeries R :=
   fun ω => expCoeff (cf.stageExps i) (ω.map cf.slope)
 
 /-- Lie–Butcher coefficients of one step of the method. -/
-def methodChar (cf : CommutatorFreeMethod ι R) : LSSeries R :=
+def series (cf : CommutatorFreeMethod ι R) : LSSeries R :=
   fun ω => expCoeff cf.stepExps (ω.map cf.slope)
 
 /-- Stage generators are the vector field evaluated at the stage points. -/
-theorem slope_eq_stageChar (cf : CommutatorFreeMethod ι R) (τ : PTree) (i : ι) :
-    cf.slope τ i = cf.stageChar i τ.children := by
+theorem slope_eq_stageSeries (cf : CommutatorFreeMethod ι R) (τ : PTree) (i : ι) :
+    cf.slope τ i = cf.stageSeries i τ.children := by
   cases τ
   exact cf.slope_node _ i
 
@@ -120,32 +120,32 @@ theorem slope_eq_stageChar (cf : CommutatorFreeMethod ι R) (τ : PTree) (i : ι
 coefficients agree with those of the exact flow on every ordered forest
 of degree at most `p`. -/
 def HasOrder (cf : CommutatorFreeMethod ι R) (p : ℕ) : Prop :=
-  OrderedExpansion.HasOrder cf.methodChar p
+  LSSeries.HasPlanarOrder cf.series p
 
 theorem HasOrder.mono {cf : CommutatorFreeMethod ι R} {p q : ℕ}
     (h : cf.HasOrder q) (hpq : p ≤ q) : cf.HasOrder p :=
-  fun ω hω => h ω (hω.trans hpq)
+  LSSeries.HasPlanarOrder.mono h hpq
 
 /-! ### Checks of the definition -/
 
 /-- The step of a commutator-free method is a Lie-group integrator: its
 coefficients form a shuffle character. -/
-theorem isExponential_methodChar [CharZero R] (cf : CommutatorFreeMethod ι R) :
-    LSSeries.IsExponential cf.methodChar := by
+theorem isExponential_series [CharZero R] (cf : CommutatorFreeMethod ι R) :
+    LSSeries.IsExponential cf.series := by
   have h := (Word.isGroupLike_piecewiseLinearSignature
     (cf.stepExps.map fun c k => StageCombination.eval c k)).comapMapLetters cf.slope
   exact ⟨h.1, fun ω₁ ω₂ => (h.2 ω₁ ω₂).symm⟩
 
 /-- The method with no exponentials is the identity map. -/
-theorem identity_methodChar (ω : PlanarForest) :
-    (identity ι R).methodChar ω = if ω = [] then 1 else 0 := by
-  cases ω <;> simp [methodChar, identity]
+theorem identity_series (ω : PlanarForest) :
+    (identity ι R).series ω = if ω = [] then 1 else 0 := by
+  cases ω <;> simp [series, identity]
 
 /-- A single-exponential step treats the trees of a forest symmetrically. -/
-theorem methodChar_perm_of_stepExps_singleton (cf : CommutatorFreeMethod ι R)
+theorem series_perm_of_stepExps_singleton (cf : CommutatorFreeMethod ι R)
     {c : StageCombination ι R} (hc : cf.stepExps = [c]) {ω ω' : PlanarForest}
-    (h : ω.Perm ω') : cf.methodChar ω = cf.methodChar ω' := by
-  simp only [methodChar, hc, expCoeff_singleton, List.map_map, List.length_map]
+    (h : ω.Perm ω') : cf.series ω = cf.series ω' := by
+  simp only [series, hc, expCoeff_singleton, List.map_map, List.length_map]
   rw [(h.map _).prod_eq, h.length_eq]
 
 /-- **Order barrier**: one exponential per step cannot reach order three,
@@ -158,21 +158,21 @@ theorem not_hasOrder_three_of_stepExps_singleton [CharZero R]
   intro h
   have h1 := h [PTree.bullet, PTree.chain2] (by decide)
   have h2 := h [PTree.chain2, PTree.bullet] (by decide)
-  rw [cf.methodChar_perm_of_stepExps_singleton hc (List.Perm.swap _ _ _), h2] at h1
-  norm_num [OrderedExpansion.exactCoeff, OrderedExpansion.forestDenominator,
-    OrderedExpansion.treeDenominator, PTree.bullet, PTree.chain2, PTree.order,
+  rw [cf.series_perm_of_stepExps_singleton hc (List.Perm.swap _ _ _), h2] at h1
+  norm_num [LSSeries.exact, LSSeries.forestDenominator,
+    LSSeries.treeDenominator, PTree.bullet, PTree.chain2, PTree.order,
     PTree.orderList] at h1
 
 /-- The Lie–Euler method `y ↦ exp(F(y)) y` expands as the frozen
 exponential `LSSeries.exactFlow`: `1/n!` on `n` leaves, and zero on every
 other forest. -/
-theorem singleExponential_methodChar [DecidableEq PlanarTree] :
-    (singleExponential.{v, u} R).methodChar = LSSeries.exactFlow R := by
+theorem singleExponential_series [DecidableEq PlanarTree] :
+    (singleExponential.{v, u} R).series = LSSeries.exactFlow R := by
   funext ω
   have hslope : ∀ t : PTree, (singleExponential.{v, u} R).slope t PUnit.unit =
       if t = PTree.bullet then 1 else 0 := by
     rintro ⟨_ | ⟨t, ts⟩⟩ <;> simp [slope_node, singleExponential, PTree.bullet]
-  simp only [methodChar, show (singleExponential.{v, u} R).stepExps = [fun _ => 1] from rfl,
+  simp only [series, show (singleExponential.{v, u} R).stepExps = [fun _ => 1] from rfl,
     expCoeff_singleton, List.map_map, List.length_map, Function.comp_def,
     StageCombination.eval_punit, smul_eq_mul, one_mul, div_eq_inv_mul,
     LSSeries.exactFlow, funext hslope]
@@ -187,15 +187,15 @@ theorem singleExponential_methodChar [DecidableEq PlanarTree] :
 theorem singleExponential_hasOrder_one : (singleExponential.{v, u} R).HasOrder 1 := by
   classical
   intro ω hω
-  rw [singleExponential_methodChar, LSSeries.exactFlow]
+  rw [singleExponential_series, LSSeries.exactFlow]
   match ω, hω with
   | [], _ => simp
   | [t], h =>
       have ht : t = PTree.bullet := (PTree.order_eq_one_iff t).mp
         (le_antisymm (by simpa [PTree.orderList] using h) (PTree.order_pos t))
       subst ht
-      simp [OrderedExpansion.exactCoeff, OrderedExpansion.forestDenominator,
-        OrderedExpansion.treeDenominator, PTree.bullet, PTree.orderList]
+      simp [LSSeries.exact, LSSeries.forestDenominator,
+        LSSeries.treeDenominator, PTree.bullet, PTree.orderList]
   | t :: u :: ω, h =>
       have := PTree.order_pos t
       have := PTree.order_pos u
@@ -208,10 +208,10 @@ theorem singleExponential_not_hasOrder_two [CharZero R] :
   classical
   intro h
   have h1 := h [PTree.chain2] (by decide)
-  rw [singleExponential_methodChar, LSSeries.exactFlow,
+  rw [singleExponential_series, LSSeries.exactFlow,
     ite_eq_right (by simp [PTree.chain2, PTree.bullet])] at h1
-  norm_num [OrderedExpansion.exactCoeff, OrderedExpansion.forestDenominator,
-    OrderedExpansion.treeDenominator, PTree.bullet, PTree.chain2, PTree.order,
+  norm_num [LSSeries.exact, LSSeries.forestDenominator,
+    LSSeries.treeDenominator, PTree.bullet, PTree.chain2, PTree.order,
     PTree.orderList] at h1
 
 /-! ### A memoised evaluator
@@ -252,14 +252,14 @@ theorem ofData_slopeData (cf : CommutatorFreeMethod (Fin s) R) :
   decreasing_by exact PTree.order_lt_of_mem_children τ.2
 
 /-- The memoised method character. -/
-def fastMethodChar (cf : CommutatorFreeMethod (Fin s) R) (ω : PlanarForest) : R :=
+def fastSeries (cf : CommutatorFreeMethod (Fin s) R) (ω : PlanarForest) : R :=
   expCoeff cf.stepExps ((ω.map (slopeData cf)).map ofData)
 
 /-- **The memoised evaluator computes the method character.** -/
-theorem fastMethodChar_eq (cf : CommutatorFreeMethod (Fin s) R) :
-    fastMethodChar cf = cf.methodChar := by
+theorem fastSeries_eq (cf : CommutatorFreeMethod (Fin s) R) :
+    fastSeries cf = cf.series := by
   funext ω
-  rw [fastMethodChar, methodChar, List.map_map]
+  rw [fastSeries, series, List.map_map]
   exact congrArg _ (List.map_congr_left fun τ _ => ofData_slopeData cf τ)
 
 end Evaluator

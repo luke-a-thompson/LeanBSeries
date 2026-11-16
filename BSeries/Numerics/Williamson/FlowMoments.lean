@@ -1,4 +1,4 @@
-import BSeries.LieButcher.CommutatorFreeCharacter
+import BSeries.LieButcher.CommutatorFreeSeries
 import BSeries.Numerics.Williamson.CommutatorFree
 import BSeries.Numerics.Williamson.OrderedMoments
 
@@ -138,9 +138,9 @@ theorem slope_toCommutatorFree (ls : LowStorage s K) :
 /-- The Lie–Butcher coefficients of the Bazavov lift are universal
 polynomials in the classical elementary weights, at every order and for
 every coefficient list. -/
-theorem toCommutatorFree_methodChar (ls : LowStorage s K) (ts : List PTree) :
-    ls.toCommutatorFree.methodChar ts = (orderedForest ts).eval (weight ls.toRK) := by
-  rw [CommutatorFreeMethod.methodChar, toCommutatorFree_stepExps_eq_rows,
+theorem toCommutatorFree_series (ls : LowStorage s K) (ts : List PTree) :
+    ls.toCommutatorFree.series ts = (orderedForest ts).eval (weight ls.toRK) := by
+  rw [CommutatorFreeMethod.series, toCommutatorFree_stepExps_eq_rows,
     funext (slope_toCommutatorFree ls), ← polyFlow_eq_expCoeff ls s le_rfl, polyFlow,
     funext (momentPrefix_eq_weight ls)]
 

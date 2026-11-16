@@ -1,6 +1,6 @@
 import BSeries.Algebra.AreaSegment
 import BSeries.Numerics.Williamson.MomentPolynomial
-import BSeries.LieButcher.OrderedExpansion
+import BSeries.LieButcher.Order
 
 /-! # Homogeneous moment polynomials for arbitrary ordered trees -/
 
@@ -134,13 +134,13 @@ theorem eval_integrate_exact {p q : Poly} {m n : ℕ}
   simpa [mul_comm] using heuler.symm
 
 theorem eval_orderedTree_exact (t : PTree) :
-    (orderedTree t).eval (exactMoment K) = OrderedExpansion.exactCoeff t.children := by
+    (orderedTree t).eval (exactMoment K) = LSSeries.exact K t.children := by
   cases t with
   | node ts =>
       rw [orderedTree_node]
-      change (orderedForest ts).eval (exactMoment K) = OrderedExpansion.exactCoeff ts
+      change (orderedForest ts).eval (exactMoment K) = LSSeries.exact K ts
       have hchildren : ∀ t ∈ ts,
-          (orderedTree t).eval (exactMoment K) = OrderedExpansion.exactCoeff t.children :=
+          (orderedTree t).eval (exactMoment K) = LSSeries.exact K t.children :=
         fun t _ => eval_orderedTree_exact t
       induction ts using List.reverseRecOn with
       | nil => simp [Poly.eval]
@@ -148,7 +148,7 @@ theorem eval_orderedTree_exact (t : PTree) :
           rw [orderedForest_append_singleton,
             eval_integrate_exact K (homogeneous_orderedForest ts) (homogeneous_orderedTree t),
             ih (fun u hu => hchildren u (by simp [hu])), hchildren t (by simp),
-            OrderedExpansion.exactCoeff_append_singleton]
+            LSSeries.exact_append_singleton]
           congr 1
           have := PTree.order_pos t
           congr 1
@@ -161,7 +161,7 @@ theorem eval_orderedTree_exact (t : PTree) :
 
 /-- Exact-flow specialization of the universal moment polynomial, at every order. -/
 theorem eval_orderedForest_exact (ts : List PTree) :
-    (orderedForest ts).eval (exactMoment K) = OrderedExpansion.exactCoeff ts := by
+    (orderedForest ts).eval (exactMoment K) = LSSeries.exact K ts := by
   simpa [orderedTree_node, PTree.children] using eval_orderedTree_exact K (.node ts)
 
 end

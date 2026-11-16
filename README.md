@@ -21,7 +21,7 @@ theorem williamson_order_transfer {K : Type*} [Field K] [CharZero K] {s p : ℕ}
 ```
 
 `CommutatorFreeMethod.HasOrder`
-([`CommutatorFreeCharacter.lean`](BSeries/LieButcher/CommutatorFreeCharacter.lean))
+([`CommutatorFreeSeries.lean`](BSeries/LieButcher/CommutatorFreeSeries.lean))
 is defined for any commutator-free method, with no reference to a Butcher
 tableau. The Lie–Butcher coefficients of a composition of exponentials are the
 signature of its piecewise-linear coefficient path, stage generators are

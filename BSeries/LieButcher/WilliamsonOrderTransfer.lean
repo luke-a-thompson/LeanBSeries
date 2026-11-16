@@ -12,7 +12,7 @@ The statement uses `CommutatorFreeMethod.HasOrder`, which compares the
 Lie–Butcher coefficients of the lift with the exact flow on **all ordered
 forests**. The proof has two steps.
 
-1. `WilliamsonMoments.toCommutatorFree_methodChar`: the coefficients of
+1. `WilliamsonMoments.toCommutatorFree_series`: the coefficients of
    the lift, defined as the signature of its coefficient path, are
    universal homogeneous polynomials in the classical elementary weights
    (`lem:stages-signature`, `lem:area` and `prop:weights`).
@@ -36,12 +36,12 @@ theorem williamson_order_transfer {K : Type*} [Field K] [CharZero K] {s p : ℕ}
     (hRK : RungeKutta.HasOrder ls.toRK p) :
     CommutatorFreeMethod.HasOrder ls.toCommutatorFree p := by
   intro ω hω
-  rw [WilliamsonMoments.toCommutatorFree_methodChar]
+  rw [WilliamsonMoments.toCommutatorFree_series]
   calc
     _ = (WilliamsonMoments.orderedForest ω).eval (WilliamsonMoments.exactMoment K) :=
       (WilliamsonMoments.homogeneous_orderedForest ω).eval_congr _ _
         fun t ht => hRK.weight (ht.trans hω)
-    _ = OrderedExpansion.exactCoeff ω := WilliamsonMoments.eval_orderedForest_exact K ω
+    _ = LSSeries.exact K ω := WilliamsonMoments.eval_orderedForest_exact K ω
 
 /-- info: 'BSeries.williamson_order_transfer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
