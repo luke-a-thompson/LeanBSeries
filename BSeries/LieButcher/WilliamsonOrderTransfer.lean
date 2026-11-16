@@ -134,6 +134,16 @@ theorem williamson_order_transfer {s p : ℕ} (ls : RungeKutta.LowStorage s ℝ)
 #guard_msgs in
 #print axioms williamson_order_transfer
 
+/-- **Every Williamson 2N tableau** of classical order `p` is the flat
+collapse of a commutator-free method of order `p`. -/
+theorem RungeKutta.IsWilliamson2N.exists_commutatorFree_hasOrder {s p : ℕ}
+    {rk : RungeKutta (Fin s) ℝ} (h2N : RungeKutta.IsWilliamson2N rk)
+    (hRK : RungeKutta.HasOrder rk p) :
+    ∃ ls : RungeKutta.LowStorage s ℝ,
+      ls.toRK = rk ∧ ls.toCommutatorFree.HasOrder p := by
+  obtain ⟨ls, rfl⟩ := h2N
+  exact ⟨ls, rfl, williamson_order_transfer ls hRK⟩
+
 /-- Classical order alone does not transfer: Kutta's third-order tableau
 has classical order three, but its one-exponential lift, which also
 collapses to the tableau on flat spaces, does not have order three. The
