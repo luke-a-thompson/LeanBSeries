@@ -6,3 +6,5 @@
 - Full `lake build` passes; the main theorem and corollary use only standard Lean axioms.
 - Define the Lie–Butcher character and `HasOrder` of a general `CommutatorFreeMethod` as the signature of its coefficient path, and state `williamson_order_transfer` for `ls.toCommutatorFree`.
 - Check the definition on Lie–Euler, on shuffle multiplicativity, and with the order-three barrier for single-exponential steps.
+- Prove order transfer directly from the general character, over any field of characteristic zero; Chen's identity on a segment is the method-independent `BSeries.AreaReduction.eval_segment`.
+- Delete the `LowStorage.flowChar` development and `LSSeries.HasPlanarOrder`; CF-EES forward order two is now an instance of `williamson_order_transfer`, and the native checks run through `CommutatorFreeMethod.fastMethodChar`.

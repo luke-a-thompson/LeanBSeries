@@ -165,12 +165,15 @@ theorem isEES_ees27r : IsEES ees27r 2 7 :=
     ⟨hasOrder_two_ees27r, not_hasOrder_three_ees27r⟩,
     ⟨hasAntisymOrder_seven_ees27r, not_hasAntisymOrder_eight_ees27r⟩⟩
 
+/-- The two-register coefficients induce the `EES(2,7;(2-√2)/4)` tableau. -/
+theorem toRK_ees27rLowStorage : ees27rLowStorage.toRK = ees27r :=
+  ext ees27r_checks.2.2.2.1 ees27r_checks.2.2.2.2
+
 /-- **`EES(2,7;(2-√2)/4)` is Williamson 2N** (arXiv:2509.20599,
 Proposition 3.1): the two-register coefficients read off the tableau
 induce it back. -/
 theorem isWilliamson2N_ees27r : IsWilliamson2N ees27r :=
-  ⟨ees27rLowStorage,
-    ext ees27r_checks.2.2.2.1 ees27r_checks.2.2.2.2⟩
+  ⟨ees27rLowStorage, toRK_ees27rLowStorage⟩
 
 end Representative
 

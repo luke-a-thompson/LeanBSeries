@@ -2,7 +2,6 @@ import BSeries.LieButcher.Series
 import BSeries.LieButcher.ForestOrder
 import BSeries.LieButcher.OrderedExpansion
 import BSeries.LieButcher.CommutatorFreeCharacter
-import BSeries.LieButcher.CommutatorFreeOrder
 import BSeries.LieButcher.WilliamsonOrderTransfer
 import BSeries.LieButcher.CFEESOrder
 import BSeries.LieButcher.PreLie

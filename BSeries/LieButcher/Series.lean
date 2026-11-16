@@ -82,6 +82,20 @@ def commutator [AddGroup R] [One R] [DecidableEq PlanarForest]
   fun ω => (if ω = [τ₁, τ₂] then (1 : R) else 0) -
     (if ω = [τ₂, τ₁] then (1 : R) else 0)
 
+/-- The **symmetric defect** of an LB character: the Grossman–Larson
+composition of the grading-signed character with the character itself —
+the LB character of the roundtrip `Φ_{-h} ∘ Φ_h`
+(arXiv:2509.20599, Theorem E.1(2)). -/
+def symmetricDefect [Ring R] (φ : LSSeries R) : LSSeries R :=
+  PlanarForest.mkwConvolution
+    (fun ω => (-1 : R) ^ PTree.orderList ω * φ ω) φ
+
+/-- An LB character has **antisymmetric order** `m` if its symmetric
+defect vanishes on every planar tree of order at most `m`: the roundtrip
+`Φ_{-h} ∘ Φ_h` recovers the identity to order `m`. -/
+def HasPlanarAntisymOrder [Ring R] (φ : LSSeries R) (m : ℕ) : Prop :=
+  ∀ τ : PTree, PTree.order τ ≤ m → symmetricDefect φ [τ] = 0
+
 section Verification
 
 variable [DecidableEq PlanarForest]
