@@ -15,8 +15,8 @@ The all-order Williamson transfer theorem is
 [`BSeries.williamson_order_transfer`](BSeries/LieButcher/WilliamsonOrderTransfer.lean):
 
 ```lean
-theorem williamson_order_transfer {s p : ℕ} (ls : RungeKutta.LowStorage s ℝ)
-    (hRK : RungeKutta.HasOrder ls.toRK p) :
+theorem williamson_order_transfer {K : Type*} [Field K] [CharZero K] {s p : ℕ}
+    (ls : RungeKutta.LowStorage s K) (hRK : RungeKutta.HasOrder ls.toRK p) :
     CommutatorFreeMethod.HasOrder ls.toCommutatorFree p
 ```
 
@@ -30,12 +30,12 @@ with the exact flow on every ordered forest of degree at most `p`. Classical
 order does not imply it in general: a step with a single exponential never has
 order three (`not_hasOrder_three_of_stepExps_singleton`).
 
-The proof identifies the coefficients of the Bazavov lift with the
-chronological recursion `LowStorage.flowChar`, constructs homogeneous moment
-polynomials using the Williamson area closure, and checks their exact-flow
-specialization. It holds for every stage count and order, allows zero
-coefficients, and uses only the standard Lean axioms (checked in the file by
-`#guard_msgs`).
+The proof shows that the moment polynomials of a forest, built from the
+Williamson area closure, satisfy Chen's identity along the coefficient path,
+so they are the coefficients of the Bazavov lift, and then checks their
+exact-flow specialization. It holds for every stage count and order, over any
+field of characteristic zero, allows zero coefficients, and uses only the
+standard Lean axioms (checked in the file by `#guard_msgs`).
 
 ## Building
 
@@ -48,7 +48,8 @@ lake exe cache get
 lake build
 ```
 
-The Williamson proof uses `HopfAlgebras.Word.AreaReduction.diff_primitive`; its
-rooted-tree grading and method-specific path identities remain in this repository.
-Moment polynomials use Mathlib `Finsupp` and `LinearMap`. The coefficient path
-is defined directly from the finite tableau rows in `AreaTableau.lean`.
+The Williamson proof uses `HopfAlgebras.Word.AreaReduction.diff_primitive` and
+`Word.piecewiseLinearSignature` from the fork. Chen's identity on a straight
+segment is the method-independent `BSeries.AreaReduction.eval_segment`; the
+rooted-tree grading and the Williamson area identity remain in
+`BSeries/Numerics/Williamson`.

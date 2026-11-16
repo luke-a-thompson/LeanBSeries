@@ -1,7 +1,6 @@
 import BSeries.Algebra.AreaSegment
 import BSeries.Numerics.Williamson.MomentPolynomial
 import BSeries.LieButcher.OrderedExpansion
-import Mathlib.Basic.Real.Basic
 
 /-! # Homogeneous moment polynomials for arbitrary ordered trees -/
 
@@ -70,50 +69,52 @@ theorem homogeneous_orderedForest (ts : List PTree) :
 
 /-- **Chen's identity for the ordered moment polynomials** on the straight
 segment from `X` to `X + V`, whenever `(X, V)` satisfies the area identity. -/
-theorem eval_orderedForest_add (X V : PTree → ℝ)
+theorem eval_orderedForest_add {K : Type*} [Field K] [CharZero K] (X V : PTree → K)
     (harea : ∀ u v, V (graft u v) - V (graft v u) = X u * V v - X v * V u)
     (ts : List PTree) :
     (orderedForest ts).eval (fun t => X t + V t) =
       ∑ j ∈ Finset.range (ts.length + 1),
-        (orderedForest (ts.take j)).eval X * (((ts.drop j).length.factorial : ℝ))⁻¹ *
+        (orderedForest (ts.take j)).eval X * (((ts.drop j).length.factorial : K))⁻¹ *
           ((ts.drop j).map fun t => (orderedTree t).rootEval V).prod := by
   refine AreaReduction.eval_segment X V orderedForest
     (fun t => (orderedTree t).rootEval V) orderedForest_nil (fun ts t => ?_) ts
   have h := Poly.diff_integrate (AreaReduction.segment X V) (fun a => Polynomial.C (V a))
     (AreaReduction.segment_area graft X V harea) (orderedForest ts) (orderedTree t)
-  have hC := Poly.map_rootEval (Polynomial.CAlgHom : ℝ →ₐ[ℚ] Polynomial ℝ) V (orderedTree t)
+  have hC := Poly.map_rootEval (Polynomial.CAlgHom : K →ₐ[ℚ] Polynomial K) V (orderedTree t)
   rw [orderedForest_append_singleton]
   exact h.trans (congrArg _ hC.symm)
 
-/-- The prescribed classical exact moments. -/
-noncomputable def exactMoment (t : PTree) : ℝ := (PTree.treeFactorial t : ℝ)⁻¹
+variable (K : Type*) [Field K] [CharZero K]
 
-noncomputable def exactVelocity (t : PTree) : ℝ :=
-  (t.children.map exactMoment).prod
+/-- The prescribed classical exact moments. -/
+noncomputable def exactMoment (t : PTree) : K := (PTree.treeFactorial t : K)⁻¹
+
+noncomputable def exactVelocity (t : PTree) : K :=
+  (t.children.map (exactMoment K)).prod
 
 theorem exactMoment_prod (ts : List PTree) :
-    (ts.map exactMoment).prod = (PTree.treeFactorialList ts : ℝ)⁻¹ := by
+    (ts.map (exactMoment K)).prod = (PTree.treeFactorialList ts : K)⁻¹ := by
   induction ts with
   | nil => simp
   | cons t ts ih => simp [exactMoment, ih, mul_comm]
 
 theorem exactVelocity_eq (t : PTree) :
-    exactVelocity t = (PTree.order t : ℝ) * exactMoment t := by
+    exactVelocity K t = (PTree.order t : K) * exactMoment K t := by
   cases t with
   | node ts =>
-      have hn : (PTree.order (.node ts) : ℝ) ≠ 0 := by
+      have hn : (PTree.order (.node ts) : K) ≠ 0 := by
         exact_mod_cast (Nat.ne_of_gt (PTree.order_pos (.node ts)))
-      simp only [exactVelocity, PTree.children, exactMoment_prod, exactMoment,
+      simp only [exactVelocity, PTree.children, exactMoment_prod K, exactMoment,
         PTree.treeFactorial_node, Nat.cast_mul, mul_inv_rev]
       field_simp
 
 theorem exact_area (u v : PTree) :
-    exactVelocity (graft u v) - exactVelocity (graft v u) =
-      exactMoment u * exactVelocity v - exactMoment v * exactVelocity u := by
-  rfl
+    exactVelocity K (graft u v) - exactVelocity K (graft v u) =
+      exactMoment K u * exactVelocity K v - exactMoment K v * exactVelocity K u := by
+  simp [exactVelocity, graft, PTree.children]
 
-theorem rootEval_exact (p : Poly) : p.rootEval exactVelocity = p.eval exactMoment := by
-  have h : Poly.rootEval exactVelocity = Poly.eval exactMoment := by
+theorem rootEval_exact (p : Poly) : p.rootEval (exactVelocity K) = p.eval (exactMoment K) := by
+  have h : Poly.rootEval (exactVelocity K) = Poly.eval (exactMoment K) := by
     apply linearMap_ext
     intro ts
     simp [Poly.rootEval, Poly.eval, exactVelocity, PTree.children]
@@ -121,31 +122,31 @@ theorem rootEval_exact (p : Poly) : p.rootEval exactVelocity = p.eval exactMomen
 
 theorem eval_integrate_exact {p q : Poly} {m n : ℕ}
     (hp : p.Homogeneous m) (hq : q.Homogeneous n) :
-    (Poly.integrate p q).eval exactMoment =
-      p.eval exactMoment * q.eval exactMoment / (m + n + 1 : ℕ) := by
-  have hdiff := Poly.diff_integrate exactMoment exactVelocity exact_area p q
-  rw [rootEval_exact] at hdiff
-  have heuler := (hp.integrate hq).euler exactMoment
-  simp_rw [← exactVelocity_eq] at heuler
+    (Poly.integrate p q).eval (exactMoment K) =
+      p.eval (exactMoment K) * q.eval (exactMoment K) / (m + n + 1 : ℕ) := by
+  have hdiff := Poly.diff_integrate (exactMoment K) (exactVelocity K) (exact_area K) p q
+  rw [rootEval_exact K] at hdiff
+  have heuler := (hp.integrate hq).euler (exactMoment K)
+  simp_rw [← exactVelocity_eq K] at heuler
   rw [hdiff] at heuler
-  have hn' : ((m + n + 1 : ℕ) : ℝ) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero (m + n)
+  have hn' : ((m + n + 1 : ℕ) : K) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero (m + n)
   apply (eq_div_iff hn').mpr
   simpa [mul_comm] using heuler.symm
 
 theorem eval_orderedTree_exact (t : PTree) :
-    (orderedTree t).eval exactMoment = OrderedExpansion.exactCoeff t.children := by
+    (orderedTree t).eval (exactMoment K) = OrderedExpansion.exactCoeff t.children := by
   cases t with
   | node ts =>
       rw [orderedTree_node]
-      change (orderedForest ts).eval exactMoment = OrderedExpansion.exactCoeff ts
+      change (orderedForest ts).eval (exactMoment K) = OrderedExpansion.exactCoeff ts
       have hchildren : ∀ t ∈ ts,
-          (orderedTree t).eval exactMoment = OrderedExpansion.exactCoeff t.children :=
+          (orderedTree t).eval (exactMoment K) = OrderedExpansion.exactCoeff t.children :=
         fun t _ => eval_orderedTree_exact t
       induction ts using List.reverseRecOn with
       | nil => simp [Poly.eval]
       | append_singleton ts t ih =>
           rw [orderedForest_append_singleton,
-            eval_integrate_exact (homogeneous_orderedForest ts) (homogeneous_orderedTree t),
+            eval_integrate_exact K (homogeneous_orderedForest ts) (homogeneous_orderedTree t),
             ih (fun u hu => hchildren u (by simp [hu])), hchildren t (by simp),
             OrderedExpansion.exactCoeff_append_singleton]
           congr 1
@@ -160,8 +161,8 @@ theorem eval_orderedTree_exact (t : PTree) :
 
 /-- Exact-flow specialization of the universal moment polynomial, at every order. -/
 theorem eval_orderedForest_exact (ts : List PTree) :
-    (orderedForest ts).eval exactMoment = OrderedExpansion.exactCoeff ts := by
-  simpa [orderedTree_node, PTree.children] using eval_orderedTree_exact (.node ts)
+    (orderedForest ts).eval (exactMoment K) = OrderedExpansion.exactCoeff ts := by
+  simpa [orderedTree_node, PTree.children] using eval_orderedTree_exact K (.node ts)
 
 end
 end BSeries.WilliamsonMoments

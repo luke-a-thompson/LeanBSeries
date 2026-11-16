@@ -29,18 +29,19 @@ open HopfAlgebras
 If a Williamson 2N Runge–Kutta scheme has classical order `p`, then its
 commutator-free lift has order `p` as a Lie-group method: its Lie–Butcher
 coefficients match the exact flow on every ordered forest of degree at
-most `p`. Any number of stages, any order, and vanishing coefficients or
-repeated nodes are allowed. -/
-theorem williamson_order_transfer {s p : ℕ} (ls : RungeKutta.LowStorage s ℝ)
+most `p`. Any number of stages, any order, any field of characteristic
+zero, and vanishing coefficients or repeated nodes are allowed. -/
+theorem williamson_order_transfer {K : Type*} [Field K] [CharZero K] {s p : ℕ}
+    (ls : RungeKutta.LowStorage s K)
     (hRK : RungeKutta.HasOrder ls.toRK p) :
     CommutatorFreeMethod.HasOrder ls.toCommutatorFree p := by
   intro ω hω
   rw [WilliamsonMoments.toCommutatorFree_methodChar]
   calc
-    _ = (WilliamsonMoments.orderedForest ω).eval WilliamsonMoments.exactMoment :=
+    _ = (WilliamsonMoments.orderedForest ω).eval (WilliamsonMoments.exactMoment K) :=
       (WilliamsonMoments.homogeneous_orderedForest ω).eval_congr _ _
         fun t ht => hRK.weight (ht.trans hω)
-    _ = OrderedExpansion.exactCoeff ω := WilliamsonMoments.eval_orderedForest_exact ω
+    _ = OrderedExpansion.exactCoeff ω := WilliamsonMoments.eval_orderedForest_exact K ω
 
 /-- info: 'BSeries.williamson_order_transfer' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -48,10 +49,11 @@ theorem williamson_order_transfer {s p : ℕ} (ls : RungeKutta.LowStorage s ℝ)
 
 /-- **Every Williamson 2N tableau** of classical order `p` is the flat
 collapse of a commutator-free method of order `p`. -/
-theorem RungeKutta.IsWilliamson2N.exists_commutatorFree_hasOrder {s p : ℕ}
-    {rk : RungeKutta (Fin s) ℝ} (h2N : RungeKutta.IsWilliamson2N rk)
+theorem RungeKutta.IsWilliamson2N.exists_commutatorFree_hasOrder
+    {K : Type*} [Field K] [CharZero K] {s p : ℕ}
+    {rk : RungeKutta (Fin s) K} (h2N : RungeKutta.IsWilliamson2N rk)
     (hRK : RungeKutta.HasOrder rk p) :
-    ∃ ls : RungeKutta.LowStorage s ℝ,
+    ∃ ls : RungeKutta.LowStorage s K,
       ls.toRK = rk ∧ ls.toCommutatorFree.HasOrder p := by
   obtain ⟨ls, rfl⟩ := h2N
   exact ⟨ls, rfl, williamson_order_transfer ls hRK⟩
@@ -61,8 +63,8 @@ has classical order three, but its one-exponential lift, which also
 collapses to the tableau on flat spaces, does not have order three. The
 Williamson structure is what drives `williamson_order_transfer`. -/
 theorem kuttaThirdOrder_not_transfer :
-    RungeKutta.HasOrder (RungeKutta.kuttaThirdOrder ℝ) 3 ∧
-      ¬ (RungeKutta.kuttaThirdOrder ℝ).toSingleExponential.HasOrder 3 :=
+    RungeKutta.HasOrder (RungeKutta.kuttaThirdOrder ℚ) 3 ∧
+      ¬ (RungeKutta.kuttaThirdOrder ℚ).toSingleExponential.HasOrder 3 :=
   ⟨RungeKutta.kuttaThirdOrder_hasOrder_three,
     RungeKutta.not_hasOrder_three_toSingleExponential _⟩
 
