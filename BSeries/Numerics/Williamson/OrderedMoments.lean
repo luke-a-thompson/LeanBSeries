@@ -1,4 +1,4 @@
-import BSeries.Algebra.AreaSegment
+import HopfAlgebras.Words.AreaSegment
 import BSeries.Numerics.Williamson.MomentPolynomial
 import BSeries.LieButcher.Order
 
@@ -76,10 +76,10 @@ theorem eval_orderedForest_add {K : Type*} [Field K] [CharZero K] (X V : PTree �
       ∑ j ∈ Finset.range (ts.length + 1),
         (orderedForest (ts.take j)).eval X * (((ts.drop j).length.factorial : K))⁻¹ *
           ((ts.drop j).map fun t => (orderedTree t).rootEval V).prod := by
-  refine AreaReduction.eval_segment X V orderedForest
+  refine Word.AreaReduction.eval_segment X V orderedForest
     (fun t => (orderedTree t).rootEval V) orderedForest_nil (fun ts t => ?_) ts
-  have h := Poly.diff_integrate (AreaReduction.segment X V) (fun a => Polynomial.C (V a))
-    (AreaReduction.segment_area graft X V harea) (orderedForest ts) (orderedTree t)
+  have h := Poly.diff_integrate (Word.AreaReduction.segment X V) (fun a => Polynomial.C (V a))
+    (Word.AreaReduction.segment_area graft X V harea) (orderedForest ts) (orderedTree t)
   have hC := Poly.map_rootEval (Polynomial.CAlgHom : K →ₐ[ℚ] Polynomial K) V (orderedTree t)
   rw [orderedForest_append_singleton]
   exact h.trans (congrArg _ hC.symm)

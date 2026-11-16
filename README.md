@@ -39,7 +39,7 @@ standard Lean axioms (checked in the file by `#guard_msgs`).
 
 ## Building
 
-Lake fetches the pinned [LeanRoughPaths fork](https://github.com/luke-a-thompson/LeanRoughPaths/tree/area-generation), including homogeneous area generation and the shared polynomial reduction.
+Lake fetches the pinned [LeanRoughPaths fork](https://github.com/luke-a-thompson/LeanRoughPaths/tree/williamson-essentials), which adds the shared polynomial area reduction.
 
 ```sh
 git clone https://github.com/luke-a-thompson/LeanBSeries lean-b-series
@@ -50,6 +50,6 @@ lake build
 
 The Williamson proof uses `HopfAlgebras.Word.AreaReduction.diff_primitive` and
 `Word.piecewiseLinearSignature` from the fork. Chen's identity on a straight
-segment is the method-independent `BSeries.AreaReduction.eval_segment`; the
+segment is the method-independent `HopfAlgebras.Word.AreaReduction.eval_segment`; the
 rooted-tree grading and the Williamson area identity remain in
 `BSeries/Numerics/Williamson`.
