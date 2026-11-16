@@ -49,6 +49,33 @@ theorem toCommutatorFree_stepExps (ls : LowStorage s R) :
     ls.toCommutatorFree.stepExps = (List.finRange s).map fun m => ls.beta m :=
   rfl
 
+/-- The first `e` segments of the coefficient path: rows of slope weights. -/
+def rows (ls : LowStorage s R) (e : ℕ) : List (Fin s → R) :=
+  ((List.finRange s).take e).map ls.beta
+
+theorem rows_succ (ls : LowStorage s R) (e : ℕ) (he : e < s) :
+    ls.rows (e + 1) = ls.rows e ++ [ls.beta ⟨e, he⟩] := by
+  simp [rows, List.take_add_one, he]
+
+private theorem filter_finRange_lt : ∀ {s : ℕ} (i : Fin s),
+    (List.finRange s).filter (fun m => m < i) = (List.finRange s).take i
+  | 0, i => i.elim0
+  | s + 1, i => by
+      rw [List.finRange_succ]
+      induction i using Fin.cases with
+      | zero => simp
+      | succ j =>
+          simp [List.filter_map, Function.comp_def, filter_finRange_lt j,
+            List.map_take]
+
+theorem toCommutatorFree_stageExps_eq_rows (ls : LowStorage s R) (i : Fin s) :
+    ls.toCommutatorFree.stageExps i = ls.rows i := by
+  rw [toCommutatorFree_stageExps, rows, filter_finRange_lt]
+
+theorem toCommutatorFree_stepExps_eq_rows (ls : LowStorage s R) :
+    ls.toCommutatorFree.stepExps = ls.rows s := by
+  rw [toCommutatorFree_stepExps, rows, List.take_of_length_le (by simp)]
+
 private theorem sum_map_filter_finRange {E : Type w} [AddCommMonoid E]
     (i : Fin s) (f : Fin s → E) :
     ((((List.finRange s).filter (fun m => m < i)).map f).sum) =

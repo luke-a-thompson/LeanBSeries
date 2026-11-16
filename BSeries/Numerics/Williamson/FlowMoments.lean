@@ -1,8 +1,16 @@
-import BSeries.LieButcher.CommutatorFreeOrder
+import BSeries.LieButcher.CommutatorFreeCharacter
+import BSeries.Numerics.Williamson.CommutatorFree
 import BSeries.Numerics.Williamson.PolynomialPath
 import RoughPaths.Signature.Polynomial
 
-/-! # The exponential lift evaluates the universal moment polynomials -/
+/-!
+# The exponential lift evaluates the universal moment polynomials
+
+The moment polynomials of a forest, evaluated along the tableau rows, obey
+Chen's identity for the coefficient path (`polyFlow_succ`). Induction on the
+number of segments identifies them with the signature of that path, and
+induction on trees identifies the stage vectors.
+-/
 
 namespace BSeries.WilliamsonMoments
 
@@ -41,42 +49,50 @@ theorem polyFlow_succ (ls : LowStorage s ℝ) (e : ℕ) (he : e < s) (ts : List 
     rootEval_slope ls e he, orderedTree_eq] at h
   exact h
 
-/-- The universal polynomial gives every numerical prefix coefficient.
-The induction follows the existing `flowChar` recursion and has no order bound. -/
-theorem flowChar_eq_polyFlow (ls : LowStorage s ℝ) (e : ℕ)
-    (ts : List PTree) (he : e ≤ s) : flowChar ls e ts = polyFlow ls e ts := by
-  cases e with
-  | zero => rw [flowChar, polyFlow_zero]
-  | succ e =>
-      rw [flowChar_succ ls e (by omega), polyFlow_succ ls e (by omega)]
-      apply Finset.sum_congr rfl
-      intro j hj
-      rw [flowChar_eq_polyFlow ls e (ts.take j) (by omega)]
-      congr 1
-      apply congrArg List.prod
-      apply List.map_congr_left
-      intro t ht
-      apply Finset.sum_congr rfl
-      intro i _
-      rw [flowChar_eq_polyFlow ls i t.children i.isLt.le]
-  termination_by (PTree.orderList ts, e)
-  decreasing_by
-    · have hle := PTree.orderList_take_le ts j
-      rcases lt_or_eq_of_le hle with hlt | heq
-      · exact Prod.Lex.left _ _ hlt
-      · rw [heq]; exact Prod.Lex.right _ (by omega)
-    · have h₁ := PTree.order_le_orderList_of_mem ht
-      have h₂ := PTree.orderList_drop_le ts j
-      have h₃ := PTree.order_eq_one_add_orderList_children t
-      exact Prod.Lex.left _ _ (by omega)
+/-- The stage vector of a tree: its moment polynomial at each tableau row. -/
+def stageVector (ls : LowStorage s ℝ) (t : PTree) : Fin s → ℝ :=
+  fun i => polyFlow ls i t.children
 
-/-- Lemma 3 and the ordered-tree induction, as an identity for the actual
-`LowStorage.methodChar`, at every order and for every coefficient list. -/
-theorem methodChar_eq_momentPolynomial (ls : LowStorage s ℝ) (ts : List PTree) :
-    ls.methodChar ts = (orderedForest ts).eval (weight ls.toRK) := by
-  rw [methodChar, flowChar_eq_polyFlow ls s ts le_rfl]
-  have h : momentPrefix ls s = weight ls.toRK := funext (momentPrefix_eq_weight ls)
-  simp only [polyFlow, h]
+/-- **Lie–Butcher coefficients as signatures** (`lem:stages-signature` of
+`papers/williamson_order_transfer.tex`): the moment polynomials at the
+`e`-th vertex are the signature of the first `e` segments of the
+coefficient path, paired with the stage vectors of the trees. -/
+theorem polyFlow_eq_expCoeff (ls : LowStorage s ℝ) (e : ℕ) (he : e ≤ s)
+    (ts : List PTree) :
+    polyFlow ls e ts =
+      CommutatorFreeMethod.expCoeff (ls.rows e) (ts.map (stageVector ls)) := by
+  induction e generalizing ts with
+  | zero =>
+      rw [polyFlow_zero]
+      cases ts <;> simp [rows]
+  | succ e ih =>
+      rw [polyFlow_succ ls e (by omega), rows_succ ls e (by omega),
+        CommutatorFreeMethod.expCoeff_concat, List.length_map]
+      refine Finset.sum_congr rfl fun j _ => ?_
+      rw [← List.map_take, ← List.map_drop, List.length_map, List.map_map,
+        mul_assoc, ih (by omega)]
+      rfl
+
+/-- The stage generators of the Bazavov lift are the stage vectors. -/
+theorem slope_toCommutatorFree (ls : LowStorage s ℝ) :
+    ∀ t : PTree, ls.toCommutatorFree.slope t = stageVector ls t
+  | .node ts => by
+      funext i
+      rw [CommutatorFreeMethod.slope_node, toCommutatorFree_stageExps_eq_rows,
+        List.map_congr_left fun t ht => slope_toCommutatorFree ls t,
+        ← polyFlow_eq_expCoeff ls i i.isLt.le]
+      rfl
+  termination_by t => PTree.order t
+  decreasing_by exact PTree.order_lt_of_mem_children ht
+
+/-- The Lie–Butcher coefficients of the Bazavov lift are universal
+polynomials in the classical elementary weights, at every order and for
+every coefficient list. -/
+theorem toCommutatorFree_methodChar (ls : LowStorage s ℝ) (ts : List PTree) :
+    ls.toCommutatorFree.methodChar ts = (orderedForest ts).eval (weight ls.toRK) := by
+  rw [CommutatorFreeMethod.methodChar, toCommutatorFree_stepExps_eq_rows,
+    funext (slope_toCommutatorFree ls), ← polyFlow_eq_expCoeff ls s le_rfl, polyFlow,
+    funext (momentPrefix_eq_weight ls)]
 
 end
 end BSeries.WilliamsonMoments

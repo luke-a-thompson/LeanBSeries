@@ -141,28 +141,6 @@ theorem list_sum_range_eq {M : Type*} [AddCommMonoid M] :
         Finset.sum_range_succ, list_sum_range_eq n f]
       simp
 
-private theorem slope_sum [Field R] {s : ℕ} (ls : LowStorage s R) (e : ℕ)
-    (he : e < s) (f : ℕ → R) :
-    ((List.range s).map fun i =>
-      (if h : e < s ∧ i < s then ls.beta ⟨e, h.1⟩ ⟨i, h.2⟩ else 0) * f i).sum =
-      ∑ i, ls.beta ⟨e, he⟩ i * f i := by
-  rw [list_sum_range_eq, ← Fin.sum_univ_eq_sum_range (fun i =>
-    (if h : e < s ∧ i < s then ls.beta ⟨e, h.1⟩ ⟨i, h.2⟩ else 0) * f i) s]
-  exact Finset.sum_congr rfl fun i _ => by rw [dite_eq_left ⟨he, i.isLt⟩]
-
-/-- The defining recursion, for an exponential inside the stage range. -/
-theorem flowChar_succ [Field R] {s : ℕ} (ls : LowStorage s R) (e : ℕ)
-    (he : e < s) (ts : List PTree) :
-    flowChar ls (e + 1) ts = ∑ j ∈ Finset.range (ts.length + 1),
-      flowChar ls e (ts.take j) * (((ts.drop j).length.factorial : R))⁻¹ *
-        (((ts.drop j).map fun t => ∑ i, ls.beta ⟨e, he⟩ i *
-          flowChar ls i t.children).prod) := by
-  rw [flowChar, list_sum_range_eq]
-  refine Finset.sum_congr rfl fun j _ => ?_
-  simp only [slope_sum ls e he, mul_assoc]
-  rw [List.attach_map_val (l := ts.drop j) (f := fun t =>
-    ∑ i, ls.beta ⟨e, he⟩ i * flowChar ls i t.children)]
-
 /-- The flow character on the single-node forest accumulates the row sums
 of the slope weights: `u_e([•]) = Σ_{m<e} Σ_i β_{m,i}`. -/
 theorem flowChar_bullet [Field R] {s : ℕ} (ls : LowStorage s R) :
