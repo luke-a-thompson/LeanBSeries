@@ -39,7 +39,7 @@ standard Lean axioms (checked in the file by `#guard_msgs`).
 
 ## Building
 
-Lake fetches the pinned [LeanRoughPaths fork](https://github.com/luke-a-thompson/LeanRoughPaths/tree/williamson-essentials), which adds the shared polynomial area reduction.
+Lake fetches the pinned [LeanRoughPaths fork](https://github.com/luke-a-thompson/LeanRoughPaths/tree/williamson-essentials), which adds the derivation area reduction and the shuffle-algebra results built on it.
 
 ```sh
 git clone https://github.com/luke-a-thompson/LeanBSeries lean-b-series
