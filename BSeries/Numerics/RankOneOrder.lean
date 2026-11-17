@@ -229,7 +229,7 @@ theorem weightedStageWeight_perturb_eq (h : RankOneOrderConditions rk q c r) :
     exact H (PTree.order t) t rfl
   intro n
   induction n using Nat.strong_induction_on with
-  | h n ih =>
+  | _ n ih =>
       intro t hn k f hbound hf
       cases t with
       | node ts =>

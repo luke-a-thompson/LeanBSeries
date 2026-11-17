@@ -13,13 +13,13 @@ Williamson 2N storage, and the minimum stage count `(m + 1) / 2`.
 
 ## Building
 
-Requires the sibling repository
-[LeanRoughPaths](https://github.com/daniil-shmelev/LeanRoughPaths)
-(rooted trees and their Hopf algebras) checked out next to this one:
+Lake fetches the pinned
+[LeanRoughPaths fork](https://github.com/luke-a-thompson/LeanRoughPaths/tree/williamson-order-transfer)
+(rooted trees and their Hopf algebras, plus the derivation area reduction
+used by the Williamson proof):
 
 ```
-git clone https://github.com/daniil-shmelev/LeanRoughPaths lean-rough-paths
-git clone https://github.com/daniil-shmelev/LeanBSeries    lean-b-series
+git clone https://github.com/luke-a-thompson/LeanBSeries lean-b-series
 cd lean-b-series
 lake exe cache get
 lake build
