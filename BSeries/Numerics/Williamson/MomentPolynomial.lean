@@ -2,16 +2,17 @@ import BSeries.Numerics.Williamson.AreaTableau
 import BSeries.LieButcher.ForestOrder
 import HopfAlgebras.Words.AreaReduction
 import Mathlib.Tactic.FieldSimp
+import Mathlib.Algebra.Module.LinearMap.Rat
 import Mathlib.Algebra.Algebra.Bilinear
 
 /-!
 # Universal moment polynomials
 
 The area identity gives a constructive version of the moment reduction:
-`(m+1) ∫ (∏ Xᵢ) dY = Y ∏ Xᵢ + ∑ᵢ ∫ (∏ⱼ≠ᵢ Xⱼ) d area(Xᵢ,Y)`.
-The number of factors decreases in each integral on the right. This is the
-polynomial integration-by-parts form of the reduction in Lemma 3 of
-`papers/williamson_order_transfer.tex`.
+`(m+1) ∫ (∏ Xᵢ) dY = Y ∏ Xᵢ + ∑ᵢ ∫ (∏ⱼ≠ᵢ Xⱼ) d area(Xᵢ,Y)`
+(`Derivation.length_succ_nsmul_prod_smul`). The number of factors decreases
+in each integral on the right, so a family closed under signed area is
+closed under integration (`AreaReduction.derivation_primitive`).
 -/
 
 namespace BSeries.WilliamsonMoments
@@ -28,8 +29,6 @@ namespace Poly
 abbrev monomial (ts : List PTree) : Poly := HopfAlgebras.Word.AreaReduction.Poly.monomial ts
 abbrev eval {R : Type*} [CommRing R] [Algebra ℚ R] (X : PTree → R) : Poly →ₗ[ℚ] R :=
   HopfAlgebras.Word.AreaReduction.Poly.eval X
-abbrev diff {R : Type*} [CommRing R] [Algebra ℚ R] (X V : PTree → R) : Poly →ₗ[ℚ] R :=
-  HopfAlgebras.Word.AreaReduction.Poly.diff X V
 
 /-- A homogeneous expression of classical moment weight `n`. -/
 inductive Homogeneous : Poly → ℕ → Prop
@@ -47,8 +46,6 @@ theorem homogeneous_sum (ps : List Poly) (n : ℕ)
 
 end Poly
 
-export HopfAlgebras.Word.AreaReduction (dmonomial)
-
 theorem selections_order {as : List PTree} {p : PTree × List PTree}
     (h : p ∈ List.selections as) : PTree.order p.1 + PTree.orderList p.2 =
       PTree.orderList as := by
@@ -63,14 +60,15 @@ theorem order_graft (u v : PTree) : PTree.order (graft u v) =
   simp [graft, PTree.order, PTree.orderList, PTree.children]
   omega
 
-abbrev primitive (n : ℕ) (ts : List PTree) (v : PTree) : Poly :=
-  HopfAlgebras.Word.AreaReduction.primitive graft n ts v
+abbrev primitive (ts : List PTree) (v : PTree) : Poly :=
+  HopfAlgebras.Word.AreaReduction.primitive graft ts v
 
-theorem homogeneous_primitive (n : ℕ) (ts : List PTree) (v : PTree) :
-    Poly.Homogeneous (primitive n ts v) (PTree.orderList ts + PTree.order v) := by
-  induction n generalizing ts v with
-  | zero => exact .zero _
-  | succ n ih =>
+theorem homogeneous_primitive (ts : List PTree) (v : PTree) :
+    Poly.Homogeneous (primitive ts v) (PTree.orderList ts + PTree.order v) := by
+  induction hn : ts.length using Nat.strong_induction_on generalizing ts v with
+  | _ n ih =>
+      show Poly.Homogeneous (HopfAlgebras.Word.AreaReduction.primitive graft ts v) _
+      rw [HopfAlgebras.Word.AreaReduction.primitive_eq]
       apply Poly.Homogeneous.scale
       apply Poly.Homogeneous.add
       · simpa [PTree.orderList, Nat.add_comm] using Poly.Homogeneous.monomial (v :: ts)
@@ -78,11 +76,14 @@ theorem homogeneous_primitive (n : ℕ) (ts : List PTree) (v : PTree) :
         intro p hp
         obtain ⟨q, hq, rfl⟩ := List.mem_map.mp hp
         have horder := selections_order hq
+        have hlen := List.selections_rest_length hq
         rw [sub_eq_add_neg, ← neg_one_smul ℚ]
         apply Poly.Homogeneous.add
-        · convert ih q.2 (graft q.1 v) using 1; rw [order_graft]; omega
+        · convert ih q.2.length (by omega) q.2 (graft q.1 v) rfl using 1
+          rw [order_graft]; omega
         · apply Poly.Homogeneous.scale
-          convert ih q.2 (graft v q.1) using 1; rw [order_graft]; omega
+          convert ih q.2.length (by omega) q.2 (graft v q.1) rfl using 1
+          rw [order_graft]; omega
 
 namespace Poly
 
@@ -104,22 +105,25 @@ theorem map_rootEval {R S : Type*} [CommRing R] [CommRing S]
 
 /-- Integrate a moment polynomial against the stage column of another. -/
 def integrate : Poly →ₗ[ℚ] Poly →ₗ[ℚ] Poly :=
-  lift₂ (fun ts us => primitive (ts.length + 1) ts (.node us))
+  lift₂ (fun ts us => primitive ts (.node us))
 
 @[simp] theorem integrate_monomial (ts us : List PTree) :
-    integrate (monomial ts) (monomial us) = primitive (ts.length + 1) ts (.node us) :=
+    integrate (monomial ts) (monomial us) = primitive ts (.node us) :=
   lift₂_word _ _ _
 
-theorem diff_integrate {R : Type*} [CommRing R] [Algebra ℚ R]
-    (X V : PTree → R)
-    (harea : ∀ u v, V (graft u v) - V (graft v u) = X u * V v - X v * V u)
-    (p q : Poly) : (integrate p q).diff X V = p.eval X * q.rootEval V := by
-  have h : integrate.compr₂ (diff X V) =
-      (LinearMap.mul ℚ R).compl₁₂ (eval X) (rootEval V) := by
+/-- For a family closed under signed area, `integrate` is integration:
+its value has the differential `p dq`. -/
+theorem derivation_integrate {R A : Type*} [CommSemiring R] [CommRing A] [Algebra R A]
+    [Algebra ℚ A] (D : Derivation R A A) (X : PTree → A)
+    (harea : ∀ u v, D (X (graft u v)) - D (X (graft v u)) = D.area (X u) (X v))
+    (p q : Poly) :
+    D ((integrate p q).eval X) = p.eval X * q.rootEval (fun t => D (X t)) := by
+  have h : integrate.compr₂ ((D : A →+ A).toRatLinearMap ∘ₗ eval X) =
+      (LinearMap.mul ℚ A).compl₁₂ (eval X) (rootEval fun t => D (X t)) := by
     apply linearMap_ext; intro ts
     apply linearMap_ext; intro us
     simpa [integrate, rootEval, eval] using
-      HopfAlgebras.Word.AreaReduction.diff_primitive graft X V harea _ ts (.node us) (Nat.lt_succ_self _)
+      HopfAlgebras.Word.AreaReduction.derivation_primitive D graft X harea ts (.node us)
   exact LinearMap.congr_fun (LinearMap.congr_fun h p) q
 
 theorem Homogeneous.integrate {p q : Poly} {m n : ℕ}
@@ -136,27 +140,7 @@ theorem Homogeneous.integrate {p q : Poly} {m n : ℕ}
     | scale c _ hp => simpa using Homogeneous.scale c hp
     | monomial us =>
       simpa [PTree.order, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
-        homogeneous_primitive (ts.length + 1) ts (.node us)
-
-theorem dmonomial_euler {R : Type*} [CommRing R] (X : PTree → R)
-    (ts : List PTree) :
-    dmonomial X (fun t => (PTree.order t : R) * X t) ts =
-      (PTree.orderList ts : R) * (ts.map X).prod := by
-  induction ts with
-  | nil => simp [dmonomial]
-  | cons t ts ih =>
-      simp only [dmonomial, ih, PTree.orderList, Nat.cast_add, List.map_cons, List.prod_cons]
-      ring
-
-/-- Euler's identity for the moment grading. -/
-theorem Homogeneous.euler {R : Type*} [CommRing R] [Algebra ℚ R]
-    {p : Poly} {n : ℕ} (hp : p.Homogeneous n) (X : PTree → R) :
-    p.diff X (fun t => (PTree.order t : R) * X t) = (n : R) * p.eval X := by
-  induction hp with
-  | zero => simp
-  | monomial ts => simpa [diff, eval] using dmonomial_euler X ts
-  | add _ _ hp hq => simp [hp, hq, mul_add]
-  | scale c _ hp => simp [hp, Algebra.smul_def, mul_left_comm]
+        homogeneous_primitive ts (.node us)
 
 /-- Classical moments through the homogeneous weight determine evaluation. -/
 theorem Homogeneous.eval_congr {R : Type*} [CommRing R] [Algebra ℚ R]

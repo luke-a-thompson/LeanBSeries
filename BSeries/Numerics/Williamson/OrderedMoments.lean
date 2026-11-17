@@ -1,4 +1,5 @@
 import HopfAlgebras.Words.AreaSegment
+import Mathlib.Algebra.Polynomial.Coeff
 import BSeries.Numerics.Williamson.MomentPolynomial
 import BSeries.LieButcher.Order
 
@@ -8,6 +9,9 @@ namespace BSeries.WilliamsonMoments
 
 open HopfAlgebras
 open HopfAlgebras.Word.Polynomial
+open scoped Polynomial
+open Polynomial (C derivative derivative' derivative'_apply derivative_C_mul_X_pow C_mul
+  smul_C coeff_C_mul coeff_X_pow)
 
 noncomputable section
 
@@ -78,9 +82,11 @@ theorem eval_orderedForest_add {K : Type*} [Field K] [CharZero K] (X V : PTree �
           ((ts.drop j).map fun t => (orderedTree t).rootEval V).prod := by
   refine Word.AreaReduction.eval_segment X V orderedForest
     (fun t => (orderedTree t).rootEval V) orderedForest_nil (fun ts t => ?_) ts
-  have h := Poly.diff_integrate (Word.AreaReduction.segment X V) (fun a => Polynomial.C (V a))
-    (Word.AreaReduction.segment_area graft X V harea) (orderedForest ts) (orderedTree t)
-  have hC := Poly.map_rootEval (Polynomial.CAlgHom : K →ₐ[ℚ] Polynomial K) V (orderedTree t)
+  have h := Poly.derivation_integrate (Polynomial.derivative' : Derivation K K[X] K[X])
+    (Word.AreaReduction.segment X V) (Word.AreaReduction.segment_area graft X V harea)
+    (orderedForest ts) (orderedTree t)
+  have hC := Poly.map_rootEval (Polynomial.CAlgHom : K →ₐ[ℚ] K[X]) V (orderedTree t)
+  simp only [Polynomial.derivative'_apply, Word.AreaReduction.derivative_segment] at h
   rw [orderedForest_append_singleton]
   exact h.trans (congrArg _ hC.symm)
 
@@ -89,49 +95,84 @@ variable (K : Type*) [Field K] [CharZero K]
 /-- The prescribed classical exact moments. -/
 noncomputable def exactMoment (t : PTree) : K := (PTree.treeFactorial t : K)⁻¹
 
-noncomputable def exactVelocity (t : PTree) : K :=
-  (t.children.map (exactMoment K)).prod
+/-- The exact classical moments along the flow: `t ^ |τ| / τ!`. -/
+noncomputable def exactPath (t : PTree) : K[X] :=
+  C (exactMoment K t) * Polynomial.X ^ PTree.order t
 
+omit [CharZero K] in
 theorem exactMoment_prod (ts : List PTree) :
     (ts.map (exactMoment K)).prod = (PTree.treeFactorialList ts : K)⁻¹ := by
   induction ts with
   | nil => simp
   | cons t ts ih => simp [exactMoment, ih, mul_comm]
 
-theorem exactVelocity_eq (t : PTree) :
-    exactVelocity K t = (PTree.order t : K) * exactMoment K t := by
+omit [CharZero K] in
+theorem exactPath_prod (ts : List PTree) :
+    (ts.map (exactPath K)).prod =
+      C (ts.map (exactMoment K)).prod * Polynomial.X ^ PTree.orderList ts := by
+  induction ts with
+  | nil => simp
+  | cons t ts ih =>
+      simp only [List.map_cons, List.prod_cons, ih, exactPath, PTree.orderList_cons, C_mul,
+        pow_add]
+      ring
+
+/-- Differentiating the exact moment of a tree removes its root. -/
+theorem derivative_exactPath (t : PTree) :
+    derivative (exactPath K t) = (t.children.map (exactPath K)).prod := by
   cases t with
   | node ts =>
       have hn : (PTree.order (.node ts) : K) ≠ 0 := by
         exact_mod_cast (Nat.ne_of_gt (PTree.order_pos (.node ts)))
-      simp only [exactVelocity, PTree.children, exactMoment_prod K, exactMoment,
-        PTree.treeFactorial_node, Nat.cast_mul, mul_inv_rev]
+      rw [exactPath, derivative_C_mul_X_pow, PTree.children, exactPath_prod, exactMoment_prod,
+        PTree.order_node, Nat.add_sub_cancel_left]
+      congr 2
+      simp only [exactMoment, PTree.treeFactorial_node, PTree.order_node, Nat.cast_mul,
+        mul_inv_rev] at hn ⊢
       field_simp
 
-theorem exact_area (u v : PTree) :
-    exactVelocity K (graft u v) - exactVelocity K (graft v u) =
-      exactMoment K u * exactVelocity K v - exactMoment K v * exactVelocity K u := by
-  simp [exactVelocity, graft, PTree.children]
+/-- The exact flow is closed under signed area. -/
+theorem exactPath_area (u v : PTree) :
+    derivative' (exactPath K (graft u v)) - derivative' (exactPath K (graft v u)) =
+      (derivative' : Derivation K K[X] K[X]).area (exactPath K u) (exactPath K v) := by
+  simp [Derivation.area, derivative_exactPath, graft, PTree.children]
 
-theorem rootEval_exact (p : Poly) : p.rootEval (exactVelocity K) = p.eval (exactMoment K) := by
-  have h : Poly.rootEval (exactVelocity K) = Poly.eval (exactMoment K) := by
+theorem rootEval_exactPath (p : Poly) :
+    p.rootEval (fun t => derivative (exactPath K t)) = p.eval (exactPath K) := by
+  have h : Poly.rootEval (fun t => derivative (exactPath K t)) = Poly.eval (exactPath K) := by
     apply linearMap_ext
     intro ts
-    simp [Poly.rootEval, Poly.eval, exactVelocity, PTree.children]
+    simp [Poly.rootEval, Poly.eval, derivative_exactPath, PTree.children]
   exact LinearMap.congr_fun h p
+
+/-- A homogeneous moment polynomial along the exact flow is a monomial. -/
+theorem Poly.Homogeneous.eval_exactPath {p : Poly} {n : ℕ} (hp : p.Homogeneous n) :
+    p.eval (exactPath K) = C (p.eval (exactMoment K)) * Polynomial.X ^ n := by
+  induction hp with
+  | zero => simp
+  | monomial ts => simp [Poly.eval, exactPath_prod]
+  | add _ _ hp hq => simp only [map_add, hp, hq, add_mul]
+  | scale c _ hp => simp only [map_smul, hp, ← smul_C, smul_mul_assoc]
 
 theorem eval_integrate_exact {p q : Poly} {m n : ℕ}
     (hp : p.Homogeneous m) (hq : q.Homogeneous n) :
     (Poly.integrate p q).eval (exactMoment K) =
       p.eval (exactMoment K) * q.eval (exactMoment K) / (m + n + 1 : ℕ) := by
-  have hdiff := Poly.diff_integrate (exactMoment K) (exactVelocity K) (exact_area K) p q
-  rw [rootEval_exact K] at hdiff
-  have heuler := (hp.integrate hq).euler (exactMoment K)
-  simp_rw [← exactVelocity_eq K] at heuler
-  rw [hdiff] at heuler
+  have hD := Poly.derivation_integrate (derivative' : Derivation K K[X] K[X]) (exactPath K)
+    (exactPath_area K) p q
+  have hmul : C ((Poly.eval (exactMoment K)) p) * Polynomial.X ^ m *
+      (C ((Poly.eval (exactMoment K)) q) * Polynomial.X ^ n) =
+      C ((Poly.eval (exactMoment K)) p * (Poly.eval (exactMoment K)) q) *
+        Polynomial.X ^ (m + n) := by
+    rw [C_mul, pow_add]; ring
+  simp only [derivative'_apply] at hD
+  rw [rootEval_exactPath, Poly.Homogeneous.eval_exactPath K (hp.integrate hq),
+    Poly.Homogeneous.eval_exactPath K hp, Poly.Homogeneous.eval_exactPath K hq,
+    derivative_C_mul_X_pow, Nat.add_sub_cancel, hmul] at hD
+  have hc := congrArg (fun f : K[X] => f.coeff (m + n)) hD
+  simp only [coeff_C_mul, coeff_X_pow, ite_true, mul_one] at hc
   have hn' : ((m + n + 1 : ℕ) : K) ≠ 0 := by exact_mod_cast Nat.succ_ne_zero (m + n)
-  apply (eq_div_iff hn').mpr
-  simpa [mul_comm] using heuler.symm
+  exact (eq_div_iff hn').mpr hc
 
 theorem eval_orderedTree_exact (t : PTree) :
     (orderedTree t).eval (exactMoment K) = LSSeries.exact K t.children := by

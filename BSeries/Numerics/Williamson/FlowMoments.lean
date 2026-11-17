@@ -19,7 +19,7 @@ open scoped BigOperators
 
 noncomputable section
 
-variable {s : ℕ} {K : Type*} [Field K] [CharZero K]
+variable {s : ℕ} {K : Type*} [Field K]
 
 def momentPrefix (ls : LowStorage s K) (e : ℕ) (t : PTree) : K :=
   ls.pathPrefix (stageWeight ls.toRK t) e
@@ -55,6 +55,8 @@ theorem momentSlope_area (ls : LowStorage s K) (e : ℕ) (u v : PTree) :
   by_cases he : e < s
   · simpa [momentSlope, momentPrefix, slope, he, mul_sub, Finset.sum_sub_distrib] using h
   · simp [momentSlope, slope, he]
+
+variable [CharZero K]
 
 theorem eval_momentPrefix_node (ls : LowStorage s K) (i : Fin s) (ts : List PTree) :
     (Poly.monomial ts).eval (momentPrefix ls i) = stageWeight ls.toRK (.node ts) i := by
